@@ -548,9 +548,9 @@ class Data(ABC):
             return xs_reshaped
 
 
-class Processsing(Data):
+class Processing(Data):
     def __init__(self, args, data_path=str):
-        super(Processsing, self).__init__(data_path=data_path)
+        super(Processing, self).__init__(data_path=data_path)
         self.args = args
 
     def get_test_data(self, filter_data=None):

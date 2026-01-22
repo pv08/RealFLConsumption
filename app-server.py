@@ -26,8 +26,8 @@ def main():
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
     parser.add_argument('--clients_per_round', type=int, default=2)
-    parser.add_argument('--required_clients', type=int, default=5)
-    parser.add_argument('--max_rounds', type=int, default=10)
+    parser.add_argument('--required_clients', type=int, default=2)
+    parser.add_argument('--max_rounds', type=int, default=2)
     args = parser.parse_args()
 
     host, port = args.host, args.port

@@ -2,14 +2,14 @@ import selectors
 import socket
 import numpy as np
 import torch as T
-import traceback
 import time
+import copy
 from logging import INFO, WARNING, ERROR
 from src.models.rnn import RNN
 from src.comm import libclient
 from src.utils.logger import log
 from argparse import ArgumentParser
-from src.individual_training import IndividualTraining
+from src.client_learning import ClientLearning
 sel = selectors.DefaultSelector()
 
 
@@ -99,16 +99,13 @@ def main():
 
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)
-    # trainer = IndividualTraining(args=args)
-    model = RNN(device=args.device, input_dim=1)  # Usando mock para exemplo
+    trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
 
     log(INFO, f"Client {args.filter_bs} initiated.")
-    # req_checkin = create_request(action="check_in", value=args.filter_bs)
-    # message = start_connection(host, port, req_checkin)
 
     try:
         while True:
-            req = create_request("check_in", {"client_id":args.filter_bs, "value": None})
+            req = create_request("check_in", {"client_id":args.filter_bs, "value": {"architecture": copy.deepcopy(trainer.model)}})
             log(INFO, f"Connecting to {args.host}:{args.port} and waiting selection...")
             resp = send_and_wait(args.host, args.port, req)
 
@@ -122,16 +119,22 @@ def main():
             if action == "stop":
                 log(INFO, f"[{args.filter_bs}] Stop signal received from server.")
                 log(WARNING, "Finishing simulation in client side.")
-                break  # Sai do While True
+                break
+
             elif action == "evaluate":
                 log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")
-                #TODO{Coloca a rotina de avaliação do cliente e retorna as métricas. Vai passar os pesos do modelo global inseridos no pacote}
-                req_m = create_request("send_metrics", {"client_id": args.filter_bs, "value": {"mse": 0.001}})
+                global_model_params = data["weights"]
+                num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
+
+                req_m = create_request("send_metrics", {"client_id": args.filter_bs, "value": {"instances": num_test_instances, "loss": test_loss,
+                                                                                                 "metrics": test_eval_metrics}})
                 send_and_wait(host, port, req_m)
+
             elif action == "train":
                 log(INFO, f"Starting training...")
-
                 # A. Carrega Pesos Globais e Treina (Uso intensivo de GPU)
+                _tmp_model = data
+                trainer.train()
                 # revised_weights = trainer.fit(global_weights=data)
                 # teste:
                 revised_weights=[val.cpu().numpy() for _, val in model.state_dict().items()]
