@@ -5,7 +5,7 @@ import torch as T
 from collections import defaultdict
 from logging import INFO, WARNING
 from typing import List, Dict
-
+from collections import OrderedDict
 from src.utils.functions import mkdir_if_not_exists
 from src.utils.logger import log
 
@@ -105,7 +105,7 @@ class FLServerState:
         if self.phase == "TRAINING":
             if client_id in self.selected_clients:
                 if client_id not in self.updates_received:
-                    return "train", self.global_weights
+                    return "train", {"current_round": self.current_round, "weights": self.global_weights}
                 else:
                     # Já enviou o update, espera a próxima fase
                     self._add_to_waitlist(message_obj)
@@ -117,7 +117,7 @@ class FLServerState:
 
         return "defer", None
 
-    def _log_and_save(self, metrics):
+    def _log_and_save_evaluation_procedure(self):
         _losses = [v["loss"] for k, v in self.evaluations_received.items()]
         _instances = [v["instances"] for k, v in self.evaluations_received.items()]
         _metrics = {k: v["metrics"] for k, v in self.evaluations_received.items()}
@@ -139,7 +139,7 @@ class FLServerState:
 
             # Se todos avaliaram
         if len(self.evaluations_received) >= self.required_clients:
-            self._log_and_save(metrics)
+            self._log_and_save_evaluation_procedure()
             if self.phase == "INITIAL_EVAL":
                 log(INFO, "Initial evaluation completed. Turning to TRAIN")
                 self._start_training_phase()
@@ -153,16 +153,59 @@ class FLServerState:
                     self._start_training_phase()  # Próxima rodada, novo sorteio
                     self.evaluations_received = {}
 
-    def receive_update(self, client_id, weights):
+    def _log_and_save_update_procedure(self):
+        _train_losses = [v["train_loss"] for k, v in self.updates_received.items()]
+        _train_instances = [v["train_instances"] for k, v in self.updates_received.items()]
+        _train_metrics = {k: v["train_metrics"] for k, v in self.updates_received.items()}
+        _train_weighted_losses = self.weighted_loss_avg(_train_instances, _train_losses)
+        _train_weighted_metrics = self.weighted_metrics_avg(_train_instances, _train_metrics)
+
+
+        _val_losses = [v["val_loss"] for k, v in self.updates_received.items()]
+        _val_instances = [v["val_instances"] for k, v in self.updates_received.items()]
+        _val_metrics = {k: v["val_metrics"] for k, v in self.updates_received.items()}
+
+        _val_weighted_losses = self.weighted_loss_avg(_val_instances, _val_losses)
+        _val_weighted_metrics = self.weighted_metrics_avg(_val_instances, _val_metrics)
+
+        self.history["update"].append({"round": self.current_round, "round_update": self.updates_received, "train_weighted_loss": _train_weighted_losses,
+                                            "train_weighted_metrics": _train_weighted_metrics, "val_weighted_loss": _val_weighted_losses,
+                                            "val_weighted_metrics": _val_weighted_metrics})
+
+        mkdir_if_not_exists(f'etc/fl/local/ckpt/{self.model_name}/')
+        mkdir_if_not_exists(f'etc/fl/logs/{self.model_name}/local/')
+
+        for k, v in self.updates_received.items():
+            with open(f'etc/fl/logs/{self.model_name}/local/{k}_fl_round_{self.current_round}_local_train_loss.npy', 'wb') as f:
+                np.save(f, np.array(v["train_history"]))
+            with open(f'etc/fl/logs/{self.model_name}/local/{k}_fl_round_{self.current_round}_local_val_loss.npy', 'wb') as f:
+                np.save(f, np.array(v["val_history"]))
+
+            _tmp_model = copy.deepcopy(self.global_model)
+            params_dict = zip(_tmp_model.state_dict().keys(), v["params"])
+            state_dict = OrderedDict({k: T.Tensor(v) for k, v in params_dict})
+            _tmp_model.load_state_dict(state_dict, strict=True)
+
+            T.save(_tmp_model.state_dict(),
+                   f"etc/fl/local/ckpt/{self.model_name}/local_model_loss-{round(v['val_loss'], 4)}_round-{self.current_round}.pth")
+
+            log(INFO, f"etc/fl/local/ckpt/{self.model_name}/local_model_loss-{round(v['val_loss'], 4)}_round-{self.current_round}.pth")
+
+    def receive_update(self, client_id, client_res):
         """Recebe pesos treinados e verifica agregação."""
+        model_params, train_history, num_train, train_loss, train_metrics, val_history, num_val, val_loss, val_metrics = client_res
         if client_id not in self.updates_received:
-            self.updates_received[client_id] = weights
+            self.updates_received[client_id] = {"params": model_params, "train_history": train_history, "train_instances": num_train, "train_loss": train_loss,
+                                                "train_metrics": train_metrics, "val_history":val_history, "val_instances": num_val,
+                                                "val_loss": val_loss, "val_metrics": val_metrics}
             log(INFO, f"Update received from client {client_id}")
 
         # Se todos treinaram, agrega e vai para avaliação global
         if len(self.updates_received) >= len(self.selected_clients):
+            self._log_and_save_update_procedure()
             log(INFO, "All selected clients trained.")
-            self.global_weights = self._aggregate_models(list(self.updates_received.values()))
+            weight_list = [v["params"] for k, v in self.updates_received.items()]
+            self.global_weights = self._aggregate_models(weight_list)
             self.updates_received = {}
             self.phase = "GLOBAL_EVAL"
             self._notify_pending_clients()

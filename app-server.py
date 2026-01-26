@@ -32,7 +32,7 @@ def main():
 
     host, port = args.host, args.port
     strategy = RandomSelection()
-    fl_state = FLServerState(strategy=strategy, required_clients=args.required_clients, clients_per_round=args.clients_per_round)
+    fl_state = FLServerState(strategy=strategy, required_clients=args.required_clients, clients_per_round=args.clients_per_round, max_rounds=args.max_rounds)
 
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

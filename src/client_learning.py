@@ -13,6 +13,7 @@ from src.models.rnn import RNN
 from src.models.lstm import LSTM
 from src.models.gru import GRU
 from src.models.cnn import CNN
+from src.utils.functions import mkdir_if_not_exists
 from src.utils.logger import log
 from src.dataset.processing import Processing
 from src.utils.early_stopping import EarlyStopping
@@ -24,7 +25,6 @@ class ClientLearning:
         self.cid = cid
         self.seed_all(seed)
         self.processing = Processing(args=self.args, data_path=self.args.data_path)
-
         X_train, X_val, y_train, y_val, self.x_scaler, self.y_scaler = self.processing.make_preprocessing(filter_bs=self.cid, per_area=False)
 
         self.X_train, self.X_val, self.y_train, self.y_val, self.client_X_train, self.client_X_val, self.client_y_train, self.client_y_val = (
@@ -62,6 +62,19 @@ class ClientLearning:
 
     def get_parameters(self) -> List[np.ndarray]:
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
+
+    def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
+        self.set_parameters(params)
+        self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
+                                                            optimizer=optimizer, lr=lr, criterion=criterion,
+                                                            early_stopping=early_stopping, patience=patience,
+                                                            device=device)
+
+        _, train_loss, train_metrics = self.evaluate(self.train_loader)
+        num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
+
+        return self.get_parameters(), train_loss_history, len(self.train_loader.dataset), train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
+
 
     def evaluate(self, data: Optional[Union[np.ndarray, DataLoader]]=None,
                  model: Optional[Union[nn.Module, List[np.ndarray]]]=None,
@@ -109,7 +122,7 @@ class ClientLearning:
         return loss, mse, rmse, mae, mape, r2, nrmse, mean_pinball
 
 
-    def train(self, model: nn.Module, cid: str, epochs: int=10, optimizer: str="adam",
+    def train(self, model: nn.Module, epochs: int=10, optimizer: str="adam",
               lr: float="1e-3", criterion: str="mse",
               early_stopping: bool=False, patience: int=50, device: str="cuda:0",
               log_per: int=1):
@@ -144,7 +157,7 @@ class ClientLearning:
                                                                               criterion, device)
             test_loss, test_mse, test_rmse, test_mae, test_mape, test_r2, test_nrmse, mean_pinball = self.test(model, self.val_loader,
                                                                                  criterion, device)
-            log(INFO, f"Participant: {cid} | Epoch {epoch + 1}/{epochs} | [Train]: loss {train_loss}, mse: {train_mse} | [Test]: loss {test_loss}, mse: {test_mse}")
+            log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{epochs} | [Train]: loss {train_loss}, mse: {train_mse} | [Test]: loss {test_loss}, mse: {test_mse}")
             train_loss_history.append(train_mse)
             train_rmse_history.append(train_rmse)
             test_loss_history.append(test_mse)
@@ -171,9 +184,9 @@ class ClientLearning:
                     best_model = copy.deepcopy(model)
                     best_epoch = epoch + 1
         if early_stopping and epochs > patience:
-            log(INFO, f"Participant: {cid} | Best loss: {best_loss}, Best Epoch: {best_epoch}")
+            log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}, Best Epoch: {best_epoch}")
         else:
-            log(INFO, f"Participant: {cid} | Best loss: {best_loss}")
+            log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}")
         return best_model, train_loss_history, test_loss_history
 
     def get_model(self, args, model: str, input_dim: int, out_dim: int, lags: int = 10):

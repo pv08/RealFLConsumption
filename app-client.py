@@ -86,7 +86,7 @@ def main():
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--optimizer", type=str, default='adamw')
     parser.add_argument("--num_workers", type=int, default=0)
-    parser.add_argument("--batch_size", type=int, default=512)
+    parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--early_stopping", type=bool, default=False)
     parser.add_argument("--patience", type=int, default=50)
 
@@ -132,16 +132,15 @@ def main():
 
             elif action == "train":
                 log(INFO, f"Starting training...")
-                # A. Carrega Pesos Globais e Treina (Uso intensivo de GPU)
-                _tmp_model = data
-                trainer.train()
-                # revised_weights = trainer.fit(global_weights=data)
-                # teste:
-                revised_weights=[val.cpu().numpy() for _, val in model.state_dict().items()]
-                time.sleep(2)
+                # 1. Recebe os pesos do servidor e coloca em um temp_model
+                global_model_params = data["weights"]
+
+                res = trainer.fit(params=global_model_params, criterion=args.criterion,
+                                  optimizer=args.optimizer, early_stopping=args.early_stopping,
+                                  patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
 
                 # B. Envia Update
-                req_u = create_request("send_update", {"client_id": args.filter_bs, "value": revised_weights})
+                req_u = create_request("send_update", {"client_id": args.filter_bs, "value": res})
                 ack = send_and_wait(args.host, args.port, req_u)
                 log(INFO, f"Update sent. Received from server {args.host}:{args.port}: {ack}")
             else:
