@@ -59,6 +59,12 @@ def main():
                             f"{traceback.format_exc()}"
                         )
                         message.close()
+            if fl_state.simulation_over:
+                # Verificamos se o seletor só tem o socket de escuta (servidor)
+                # ou se todas as mensagens na lista de espera já foram enviadas.
+                if len(sel.get_map()) <= 1 and len(fl_state.pending_messages)==0:
+                    log(INFO, "Simulação concluída. Encerrando servidor...")
+                    raise KeyboardInterrupt
     except KeyboardInterrupt:
         log(WARNING, "Caught keyboard interrupt, exiting")
     finally:

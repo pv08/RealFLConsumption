@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 import torch as T
-
+import pickle
 from collections import defaultdict
 from logging import INFO, WARNING
 from typing import List, Dict
@@ -28,6 +28,7 @@ class FLServerState:
         self.pending_messages = []
         self.updates_received = {}  # {client_id: weights}
         self.evaluations_received = {}
+        self.tests_received = {}
         # Modelo Global (Simulado - inicialize com a arquitetura real)
         self.history = defaultdict(list)
         self.best_loss, self.best_round = np.inf, -1
@@ -88,7 +89,7 @@ class FLServerState:
         Agora aceita o objeto da mensagem para guardá-lo se necessário.
         """
         if self.simulation_over:
-            return "stop", None
+            return "stop", {"architecture": self.global_model, "weights": self.global_weights}
 
         # Espera até que a quantidade de clientes seja o suficiente
         if self.phase == "WAITING_CLIENTS":
@@ -131,6 +132,21 @@ class FLServerState:
             self.best_round = self.current_round
             mkdir_if_not_exists(f'etc/fl/server/ckpt/{self.model_name}')
             T.save(self.global_model.state_dict(), f"etc/fl/server/ckpt/{self.model_name}/global_model_loss-{round(self.best_loss, 4)}_round-{self.best_round}.pth")
+
+    def receive_test(self, client_id, results):
+        if client_id not in self.tests_received:
+            self.tests_received[client_id] = results
+            log(INFO, f"Results from client {client_id} received ")
+
+            # Se todos avaliaram
+        if len(self.tests_received) >= self.required_clients:
+            mkdir_if_not_exists(f'etc/fl/results/{self.model_name}/')
+            with open(f'etc/fl/logs/{self.model_name}/history_simulation.pkl', "wb") as f:
+                pickle.dump(self.history, f)
+            log(INFO, f"Simulation history saved on etc/fl/logs/{self.model_name}/history_simulation.pkl")
+            with open(f'etc/fl/results/{self.model_name}/global_model_cids_tests.pkl', "wb") as f:
+                pickle.dump(self.tests_received, f)
+                log(INFO, f"Simulation testing saved on etc/fl/results/{self.model_name}/global_model_cids_tests.pkl")
 
     def receive_metrics(self, client_id, metrics):
         if client_id not in self.evaluations_received:
@@ -217,7 +233,7 @@ class FLServerState:
 
         for msg in self.pending_messages:
             # Envia a ordem de parada
-            content = {"action": "stop"}
+            content = {"action": "stop", "data": {"architecture": self.global_model, "weights": self.global_weights}}
             msg.trigger_delayed_response(content)
 
         # Limpa a lista

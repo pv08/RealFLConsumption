@@ -13,7 +13,7 @@ from src.models.rnn import RNN
 from src.models.lstm import LSTM
 from src.models.gru import GRU
 from src.models.cnn import CNN
-from src.utils.functions import mkdir_if_not_exists
+from src.utils.functions import mkdir_if_not_exists, inverse_transform_test
 from src.utils.logger import log
 from src.dataset.processing import Processing
 from src.utils.early_stopping import EarlyStopping
@@ -29,6 +29,8 @@ class ClientLearning:
 
         self.X_train, self.X_val, self.y_train, self.y_val, self.client_X_train, self.client_X_val, self.client_y_train, self.client_y_val = (
             self.processing.make_postprocessing(X_train, X_val, y_train, y_val))
+
+
 
         self.input_dim = self.processing.get_input_dims(self.X_train)
 
@@ -97,6 +99,39 @@ class ClientLearning:
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         return len(data.dataset), loss, metrics
+
+    def test_model(self, params):
+        self.set_parameters(params)
+        self.X_test, self.y_test, num_features = self.processing.make_test_processing(filter_data=self.cid,
+                                                                                      x_scaler=self.x_scaler,
+                                                                                      y_scaler=self.y_scaler)
+
+        self.test_loader = TimeSeriesLoader(X=self.X_test, y=self.y_test,
+                                       num_lags=self.args.num_lags,
+                                       num_features=num_features,
+                                       indices=[0], batch_size=self.args.batch_size, shuffle=False,
+                                       num_workers=self.args.num_workers).get_dataloader()
+
+        test_mse, test_rmse, test_mae, test_mape, test_r2, test_nrmse, pinball, _, y_pred_test = self.test(self.model, self.test_loader,
+                                                                                                    None,
+                                                                                                    device=self.args.device)
+
+        inverted_y_test, inverted_y_pred_test = inverse_transform_test(
+            self.y_test, y_pred_test, self.y_scaler, round_preds=False, dims=[0]
+        )
+
+        inverted_test_mse, inverted_test_rmse, inverted_test_mae, inverted_test_mape, inverted_test_r2, inverted_test_nrmse, inverted_test_pinball, inverted_test_res_per_dim = self.accumulate_metrics(
+            inverted_y_test, inverted_y_pred_test, log_per_output=True, return_all=True
+            )
+
+        results = {'y_true': self.y_test.tolist(), 'y_pred': y_pred_test.tolist(), 'mse': test_mse, 'rmse': test_rmse, 'mae': test_mae, 'mape': test_mape, 'r2': test_r2, 'nrmse': test_nrmse,
+                   'pinball': pinball, 'client': self.cid}
+        inverted_values = {'y_true': inverted_y_test.tolist(), 'y_pred': inverted_y_pred_test.tolist(), 'mse': inverted_test_mse, 'rmse': inverted_test_rmse, 'mae': inverted_test_mae, 'mape': inverted_test_mape,
+                           'r2': inverted_test_r2, 'nrmse': inverted_test_nrmse, 'pinball': inverted_test_pinball,
+                           'client': self.cid}
+
+        return results, inverted_values
+
 
 
     def test(self, model: nn.Module, data, criterion, device: str="cuda"):

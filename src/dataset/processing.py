@@ -554,14 +554,9 @@ class Processing(Data):
         self.args = args
 
     def get_test_data(self, filter_data=None):
-        files = glob.glob(f"{self.args.test_path}/*.csv", recursive=True)
-        df_dict = {}
-        for file in files:
-            cid = file.split('/')[-1].replace('.csv', '')
-            df = pd.read_csv(file)
-            df.drop("Date", axis=1, inplace=True)
-            df_dict[cid] = df
-        return df_dict
+        df = pd.read_csv(f"{self.args.test_path}/{filter_data}.csv")
+        df.drop("Date", axis=1, inplace=True)
+        return df
 
     def get_available_clients(self):
         df = self.read_data(filter_data=None)
@@ -650,3 +645,35 @@ class Processing(Data):
         # centralized (all) learning specific
         return X_train, X_val, y_train, y_val, area_X_train, area_X_val, area_y_train, area_y_val
 
+    def make_test_processing(self, filter_data, x_scaler, y_scaler):
+        df = pd.read_csv(f"{self.args.test_path}/full_dataset.csv")
+        if filter_data is not None:
+            log(INFO, f"Reading {filter_data}'s data...")
+            df = df.loc[df['cid'] == int(filter_data)]
+        # df.drop("Date", axis=1, inplace=True)
+        cols = [col for col in df.columns if col not in ["cid"]]
+        df[cols] = df[cols].astype('float32')
+
+        test_data = self.handle_nans(train_data=df, constant=self.args.nan_constant,
+                                                identifier=self.args.identifier)
+        X_test, y_test = self.to_Xy(test_data, targets=self.args.targets)
+        X_test = self.scale_features(X_test, scaler=x_scaler, per_area=False)
+        y_test = self.scale_features(y_test, scaler=y_scaler, per_area=False)
+
+        # generate time lags
+        X_test = self.generate_time_lags(X_test, self.args.num_lags)
+        y_test = self.generate_time_lags(y_test, self.args.num_lags, is_y=True)
+
+        # remove identifiers
+        X_test, y_test = self.remove_identifiers(X_test, y_test)
+
+        num_features = len(X_test.columns) // self.args.num_lags
+
+        # to timeseries representation
+        X_test = self.to_timeseries_rep(X_test.to_numpy(), self.args.num_lags, num_features=num_features)
+
+        y_test = y_test.to_numpy()
+
+        num_features = len(X_test[0][0])
+
+        return X_test, y_test, num_features

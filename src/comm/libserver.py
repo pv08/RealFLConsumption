@@ -96,6 +96,11 @@ class Message:
             self.fl_state.receive_metrics(client_id, value)
             return {"action": "registered"}
 
+        elif action == "send_test":
+            self.fl_state.receive_test(client_id, value)
+            return {"action": "registered"}
+
+
         elif action == "send_update":
             self.fl_state.receive_update(client_id, value)
             return {"action": "registered"}

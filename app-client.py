@@ -82,7 +82,7 @@ def main():
     # 3. Model args
     parser.add_argument("--criterion", type=str, default='mse')
     parser.add_argument("--model_name", type=str, default='lstm', help='["mlp", "rnn" ,"lstm", "gru", "cnn", "da_encoder_decoder"]')
-    parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--optimizer", type=str, default='adamw')
     parser.add_argument("--num_workers", type=int, default=0)
@@ -117,9 +117,15 @@ def main():
             data = resp.get("data")
 
             if action == "stop":
-                log(INFO, f"[{args.filter_bs}] Stop signal received from server.")
+                log(INFO, f"[{args.filter_bs}] Stop signal received from server. Testing global model on test set.")
+                global_model_params = data["weights"]
+                results, inverted_values = trainer.test_model(global_model_params)
+                req_t = create_request("send_test", {"client_id": args.filter_bs,
+                                                        "value": {"results": results, "inverted_results": inverted_values}})
+                send_and_wait(host, port, req_t)
+
                 log(WARNING, "Finishing simulation in client side.")
-                break
+                raise KeyboardInterrupt
 
             elif action == "evaluate":
                 log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")
