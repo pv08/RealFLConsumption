@@ -3,6 +3,8 @@ services:
     build: .
     container_name: fl-server
     command: python app-server.py --host 0.0.0.0 --required_clients 2 --max_rounds 2
+    ports:
+      - "65432:65432"
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; s = socket.socket(); s.connect(('0.0.0.0', 65432))"]
       interval: 5s
@@ -20,7 +22,7 @@ services:
     depends_on:
       fl-server:
         condition: service_healthy
-    command: python app-client.py --host 0.0.0.0 --filter_bs 1
+    command: python app-client.py --host fl-server --filter_bs 1
     deploy:
       resources:
         reservations:
@@ -40,7 +42,7 @@ services:
     depends_on:
       fl-server:
         condition: service_healthy
-    command: python app-client.py --host 0.0.0.0 --filter_bs 4
+    command: python app-client.py --host fl-server --filter_bs 4
     networks:
       - fl-network
     deploy:
