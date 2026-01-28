@@ -1,143 +1,50 @@
 services:
-  # O Servidor Central
-  fl_server:
+  fl-server:
     build: .
-    container_name: fl_server
-    command: python app-server.py
-    healthcheck:
-      test: [ "CMD", "timeout", "1", "bash", "-c", "</dev/tcp/127.0.0.1/65432" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - fl_network
-
-  # Cliente 0
-  client_0:
-    build: .
-    # runtime: nvidia
-    depends_on:
-      fl_server:
-        condition: service_healthy
-    restart: on-failure
-    environment:
-      - GPU_FRACTION=0.2    # Reserva 20% da VRAM
-      - CLIENT_ID=0      # Dado "privado" do cliente 1
-      - LOCAL_DATA=10
+    container_name: fl-server
+    command: python app-server.py --host 0.0.0.0 --required_clients 2 --max_rounds 2
     volumes:
-      - ./dataset/ufjf-meters/trafos/train/:/app/data
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+      - ./etc/:/app/etc/
+    ports:
+      - "65432:65432"
     networks:
-      - fl_network
-    command: python app-client.py --filter_bs=0
+      - fl-network
 
-  # Cliente 0
   client_1:
     build: .
-    # runtime: nvidia
     depends_on:
-      fl_server:
-        condition: service_healthy
-    restart: on-failure
+      - fl-server
+    command: python app-client.py --host fl-server --filter_bs 1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     environment:
-      - GPU_FRACTION=0.2    # Reserva 20% da VRAM
-      - CLIENT_ID=0      # Dado "privado" do cliente 1
-      - LOCAL_DATA=10
-    volumes:
-      - ./dataset/ufjf-meters/trafos/train/:/app/data
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+      - NVIDIA_VISIBLE_DEVICES=all
+
     networks:
-      - fl_network
-    command: python app-client.py --filter_bs=1
+      - fl-network
 
-
-  # Cliente 2
-  client_2:
-    build: .
-    # runtime: nvidia
-    depends_on:
-      fl_server:
-        condition: service_healthy
-    restart: on-failure
-    environment:
-      - GPU_FRACTION=0.2    # Reserva 20% da VRAM
-      - CLIENT_ID=0      # Dado "privado" do cliente 1
-      - LOCAL_DATA=10
-    volumes:
-      - ./dataset/ufjf-meters/trafos/train/:/app/data
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
-    networks:
-      - fl_network
-    command: python app-client.py --filter_bs=2
-
-
-  # Cliente 3
-  client_3:
-    build: .
-    # runtime: nvidia
-    depends_on:
-      fl_server:
-        condition: service_healthy
-    restart: on-failure
-    environment:
-      - GPU_FRACTION=0.2    # Reserva 20% da VRAM
-      - CLIENT_ID=0      # Dado "privado" do cliente 1
-      - LOCAL_DATA=10
-    volumes:
-      - ./dataset/ufjf-meters/trafos/train/:/app/data
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
-    networks:
-      - fl_network
-    command: python app-client.py --filter_bs=3
-
-  # Cliente 3
   client_4:
     build: .
-    # runtime: nvidia
     depends_on:
-      fl_server:
-        condition: service_healthy
-    restart: on-failure
-    environment:
-      - GPU_FRACTION=0.2    # Reserva 20% da VRAM
-      - CLIENT_ID=0      # Dado "privado" do cliente 1
-      - LOCAL_DATA=10
-    volumes:
-      - ./dataset/ufjf-meters/trafos/train/:/app/data
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+      - fl-server
+    command: python app-client.py --host fl-server --filter_bs 4
     networks:
-      - fl_network
-    command: python app-client.py --filter_bs=4
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+
 networks:
-  fl_network:
+  fl-network: # Nome corrigido para bater com os serviços
     driver: bridge

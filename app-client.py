@@ -101,7 +101,7 @@ def main():
     socket.setdefaulttimeout(3600)
     trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
 
-    log(INFO, f"Client {args.filter_bs} initiated.")
+    log(INFO, f"Client {args.filter_bs} initiated -> {args}.")
 
     try:
         while True:
