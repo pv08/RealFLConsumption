@@ -4,10 +4,11 @@ services:
     container_name: fl-server
     command: python app-server.py --required_clients 2 --max_rounds 2
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "65432" ]
+      test: ["CMD", "python", "-c", "import socket; s = socket.socket(); s.connect(('127.0.0.1', 65432))"]
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
     volumes:
       - ./etc/:/app/etc/
     networks:
