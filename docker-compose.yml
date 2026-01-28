@@ -251,27 +251,6 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
       - GPU_FRACTION=0.05
 
-
-  client_11:
-    build: .
-    runtime: nvidia
-    depends_on:
-      fl-server:
-        condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 11 --epochs 200 --batch_size 512
-    networks:
-      - fl-network
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.05
-
   client_12:
     build: .
     runtime: nvidia
@@ -292,25 +271,6 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
       - GPU_FRACTION=0.05
 
-  client_13:
-    build: .
-    runtime: nvidia
-    depends_on:
-      fl-server:
-        condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 13 --epochs 200 --batch_size 512
-    networks:
-      - fl-network
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.05
 
   client_14:
     build: .
