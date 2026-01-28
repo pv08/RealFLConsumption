@@ -3,6 +3,14 @@ services:
     build: .
     container_name: fl-server
     command: python app-server.py --host 0.0.0.0 --required_clients 2 --max_rounds 2
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     ports:
       - "65432:65432"
     healthcheck:
