@@ -2,7 +2,7 @@ services:
   fl-server:
     build: .
     container_name: fl-server
-    command: python app-server.py --host 0.0.0.0 --required_clients 2 --max_rounds 2
+    command: python app-server.py --host 0.0.0.0 --required_clients 5 --max_rounds 10
     runtime: nvidia
     deploy:
       resources:
@@ -24,13 +24,13 @@ services:
     networks:
       - fl-network
 
-  client_1:
+  client_0:
     build: .
     runtime: nvidia
     depends_on:
       fl-server:
         condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 1
+    command: python app-client.py --host fl-server --filter_bs 0 --epochs 200 --batch_size 512
     deploy:
       resources:
         reservations:
@@ -44,13 +44,425 @@ services:
     networks:
       - fl-network
 
+
+  client_1:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 1 --epochs 200 --batch_size 512
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+    networks:
+      - fl-network
+
+
+  client_2:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 2 --epochs 200 --batch_size 512
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+    networks:
+      - fl-network
+
+  client_3:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 3 --epochs 200 --batch_size 512
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+    networks:
+      - fl-network
+
+
+
   client_4:
     build: .
     runtime: nvidia
     depends_on:
       fl-server:
         condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 4
+    command: python app-client.py --host fl-server --filter_bs 4 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+  client_5:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 5 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+
+  client_6:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 6 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+  client_7:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 7 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+
+  client_8:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 8 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+  client_9:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 9 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+
+  client_10:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 10 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+
+  client_11:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 11 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+  client_12:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 12 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+  client_13:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 13 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+  client_14:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 14 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+
+  client_15:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 15 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+
+  client_16:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 16 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+
+  client_17:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 17 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+
+  client_18:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 18 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+  client_19:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 19 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+  client_20:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 20 --epochs 200 --batch_size 512
+    networks:
+      - fl-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
+
+  client_21:
+    build: .
+    runtime: nvidia
+    depends_on:
+      fl-server:
+        condition: service_healthy
+    command: python app-client.py --host fl-server --filter_bs 21 --epochs 200 --batch_size 512
     networks:
       - fl-network
     deploy:
