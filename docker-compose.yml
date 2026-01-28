@@ -2,7 +2,7 @@ services:
   fl-server:
     build: .
     container_name: fl-server
-    command: python app-server.py --host 0.0.0.0 --required_clients 2 --max_rounds 2
+    command: python app-server.py --host 127.0.0.1 --required_clients 2 --max_rounds 2
     volumes:
       - ./etc/:/app/etc/
     ports:
@@ -12,6 +12,7 @@ services:
 
   client_1:
     build: .
+    runtime: nvidia
     depends_on:
       - fl-server
     command: python app-client.py --host fl-server --filter_bs 1
@@ -24,12 +25,13 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-
+      - GPU_FRACTION=0.2
     networks:
       - fl-network
 
   client_4:
     build: .
+    runtime: nvidia
     depends_on:
       - fl-server
     command: python app-client.py --host fl-server --filter_bs 4
@@ -44,6 +46,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
+      - GPU_FRACTION=0.2
 
 networks:
   fl-network: # Nome corrigido para bater com os serviços
