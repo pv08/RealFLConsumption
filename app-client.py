@@ -125,7 +125,7 @@ def main():
                 send_and_wait(host, port, req_t)
 
                 log(WARNING, "Finishing simulation in client side.")
-                raise KeyboardInterrupt
+                break
 
             elif action == "evaluate":
                 log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")

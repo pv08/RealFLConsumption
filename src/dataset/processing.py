@@ -88,7 +88,7 @@ class Data(ABC):
             b = np.where(b > high_percentile_val, high_percentile_val, b)
             return b
 
-    def read_data(self, filter_data: str = None):
+    def read_data(self, filter_data: str):
         if filter_data == 'community':
             df = pd.read_csv(f"{self.data_path}/community.csv")
             df.drop("Date", axis=1, inplace=True)
@@ -96,8 +96,9 @@ class Data(ABC):
             df[cols] = df[cols].astype('float32')
             return df
 
-        if Path(f"{self.data_path}/full_dataset.csv").exists():
-            df = pd.read_csv(f"{self.data_path}/full_dataset.csv")
+        if Path(f"{self.data_path}/trafo{filter_data}.csv").exists():
+            df = pd.read_csv(f"{self.data_path}/trafo"
+                             f"{filter_data}.csv")
             if filter_data is not None:
                 log(INFO, f"Reading {filter_data}'s data...")
                 df = df.loc[df['cid'] == int(filter_data)]
@@ -558,11 +559,6 @@ class Processing(Data):
         df.drop("Date", axis=1, inplace=True)
         return df
 
-    def get_available_clients(self):
-        df = self.read_data(filter_data=None)
-        return df['cid'].unique().tolist()
-
-
 
     def get_input_dims(self, X_train):
         if self.args.model_name == "mlp":
@@ -646,7 +642,7 @@ class Processing(Data):
         return X_train, X_val, y_train, y_val, area_X_train, area_X_val, area_y_train, area_y_val
 
     def make_test_processing(self, filter_data, x_scaler, y_scaler):
-        df = pd.read_csv(f"{self.args.test_path}/full_dataset.csv")
+        df = pd.read_csv(f"{self.args.test_path}/trafo{filter_data}.csv")
         if filter_data is not None:
             log(INFO, f"Reading {filter_data}'s data...")
             df = df.loc[df['cid'] == int(filter_data)]

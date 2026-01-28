@@ -1,4 +1,4 @@
 /dataset/
 /etc/
+__pycache__/
 .idea
-.DS_Store
