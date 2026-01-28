@@ -40,7 +40,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
     networks:
       - fl-network
 
@@ -61,7 +61,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
     networks:
       - fl-network
 
@@ -82,7 +82,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
     networks:
       - fl-network
 
@@ -102,7 +102,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
     networks:
       - fl-network
 
@@ -126,7 +126,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
   client_5:
     build: .
@@ -146,7 +146,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
 
   client_6:
@@ -167,7 +167,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
   client_7:
     build: .
@@ -187,7 +187,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
 
   client_8:
@@ -208,7 +208,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
   client_9:
     build: .
@@ -228,7 +228,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
 
   client_10:
@@ -249,7 +249,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
 
   client_11:
@@ -270,7 +270,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
   client_12:
     build: .
@@ -290,7 +290,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
   client_13:
     build: .
@@ -310,7 +310,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
   client_14:
     build: .
@@ -330,7 +330,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
 
   client_15:
@@ -351,7 +351,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
 
   client_16:
@@ -372,7 +372,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
 
   client_17:
@@ -393,7 +393,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
 
   client_18:
@@ -414,7 +414,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
   client_19:
     build: .
@@ -434,7 +434,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
   client_20:
     build: .
@@ -454,7 +454,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
   client_21:
     build: .
@@ -474,7 +474,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.2
+      - GPU_FRACTION=0.05
 
 networks:
   fl-network: # Nome corrigido para bater com os serviços
