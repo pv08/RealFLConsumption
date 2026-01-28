@@ -1,6 +1,6 @@
 import selectors
 import socket
-import numpy as np
+import os
 import torch as T
 import time
 import copy
@@ -96,6 +96,11 @@ def main():
     parser.add_argument("--device", type=str, default=T.device('cuda:0' if T.cuda.is_available() else 'cpu'))
 
     args = parser.parse_args()
+
+    gpu_fraction = float(os.getenv("GPU_FRACTION", 0.1))
+    if T.cuda.is_available():
+        T.cuda.set_per_process_memory_fraction(gpu_fraction, 0)
+        log(INFO, f"Client using {args.device} in {gpu_fraction * 100}% of the GPU total")
 
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)
