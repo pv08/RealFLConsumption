@@ -4,7 +4,7 @@ services:
     container_name: fl-server
     command: python app-server.py --required_clients 2 --max_rounds 2
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "8080" ]
+      test: [ "CMD", "nc", "-z", "localhost", "65432" ]
       interval: 5s
       timeout: 5s
       retries: 5
