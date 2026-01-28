@@ -2,11 +2,11 @@ services:
   fl-server:
     build: .
     container_name: fl-server
-    command: python app-server.py --host 127.0.0.1 --required_clients 2 --max_rounds 2
+    command: python app-server.py --host 0.0.0.0 --required_clients 2 --max_rounds 2
     ports:
       - "65432:65432"
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; s = socket.socket(); s.connect(('127.0.0.1', 65432))"]
+      test: ["CMD", "python", "-c", "import socket; s = socket.socket(); s.connect(('0.0.0.0', 65432))"]
       interval: 5s
       timeout: 5s
       retries: 5
