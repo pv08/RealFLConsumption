@@ -20,7 +20,7 @@ services:
     depends_on:
       fl-server:
         condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 1
+    command: python app-client.py --host 0.0.0.0 --filter_bs 1
     deploy:
       resources:
         reservations:
@@ -40,7 +40,7 @@ services:
     depends_on:
       fl-server:
         condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 4
+    command: python app-client.py --host 0.0.0.0 --filter_bs 4
     networks:
       - fl-network
     deploy:
