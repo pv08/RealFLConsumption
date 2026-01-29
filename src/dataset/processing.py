@@ -96,13 +96,13 @@ class Data(ABC):
             df[cols] = df[cols].astype('float32')
             return df
 
-        if Path(f"{self.data_path}/{filter_data}.csv").exists():
+        if Path(f"{self.data_path}/trafo{filter_data}.csv").exists():
             df = pd.read_csv(f"{self.data_path}/"
-                             f"{filter_data}.csv")
+                             f"trafo{filter_data}.csv")
             if filter_data is not None:
                 log(INFO, f"Reading {filter_data}'s data...")
                 df = df.loc[df['cid'] == int(filter_data)]
-            df.drop("Date", axis=1, inplace=True)
+            # df.drop("Date", axis=1, inplace=True)
             cols = [col for col in df.columns if col not in ["cid"]]
             df[cols] = df[cols].astype('float32')
             log(INFO, f"{filter_data}'s data shape: {df.shape}")

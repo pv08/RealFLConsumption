@@ -64,8 +64,6 @@ class FLServerState:
         self.global_model = copy.deepcopy(next(iter(self.registered_clients.values())))
         # Se todos os modelo são iguais, faça uma média
         weight_list = [self._get_parameters(client) for client in self.registered_clients.values()]
-        for cid, w in zip(self.registered_clients.keys(), weight_list):
-            print(cid, np.array(w).shape)
         self.global_weights = self._aggregate_models(weight_list)
         self.model_name = type(self.global_model).__name__
         log(INFO, f"Global model architecture defined as {type(self.global_model).__name__}")
