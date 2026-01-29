@@ -22,6 +22,7 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True # Alocação dinâmica
+    shm_size: '1gb'
     volumes:
       - ./etc/:/app/etc/
     networks:
@@ -44,9 +45,10 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.01
+      - GPU_FRACTION=0.1
       - CUBLAS_WORKSPACE_CONFIG=:4096:8
       - PYTORCH_ALLOC_CONF=expandable_segments:True
+    shm_size: '1gb'
     networks:
       - fl-network
 
@@ -67,7 +69,7 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.01
+      - GPU_FRACTION=0.1
       - CUBLAS_WORKSPACE_CONFIG=:4096:8
       - PYTORCH_ALLOC_CONF=expandable_segments:True
     networks:
@@ -89,9 +91,10 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.01
+      - GPU_FRACTION=0.1
       - CUBLAS_WORKSPACE_CONFIG=:4096:8
       - PYTORCH_ALLOC_CONF=expandable_segments:True
+    shm_size: '1gb'
     networks:
       - fl-network
 
@@ -113,9 +116,10 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    shm_size: '1gb'
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.01
+      - GPU_FRACTION=0.1
       - CUBLAS_WORKSPACE_CONFIG=:4096:8
       - PYTORCH_ALLOC_CONF=expandable_segments:True
 
@@ -135,9 +139,10 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    shm_size: '1gb'
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.01
+      - GPU_FRACTION=0.1
       - CUBLAS_WORKSPACE_CONFIG=:4096:8
       - PYTORCH_ALLOC_CONF=expandable_segments:True
 
@@ -157,9 +162,10 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.01
+      - GPU_FRACTION=0.1
       - CUBLAS_WORKSPACE_CONFIG=:4096:8
       - PYTORCH_ALLOC_CONF=expandable_segments:True
+    shm_size: '1gb'
     networks:
       - fl-network
 
