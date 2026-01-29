@@ -67,8 +67,8 @@ def main():
     parser.add_argument('--port', type=int, default=65432)
 
     # 2. Data args
-    parser.add_argument("--data_path", type=str, default='dataset/ufjf-meters/trafos/train/')
-    parser.add_argument("--test_path", type=str, default='dataset/ufjf-meters/trafos/test/')
+    parser.add_argument("--data_path", type=str, default='dataset/pecanstreet/15min/austin/train/')
+    parser.add_argument("--test_path", type=str, default='dataset/pecanstreet/15min/austin/test/')
     parser.add_argument("--test_size", type=float, default=0.2)
     parser.add_argument("--targets", type=list, default=['P'])
     parser.add_argument("--num_lags", type=int, default=96)
