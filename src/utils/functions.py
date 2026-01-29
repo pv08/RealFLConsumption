@@ -13,6 +13,26 @@ from src.models.lstm import LSTM
 from src.models.gru import GRU
 from src.models.cnn import CNN
 
+
+def get_model(model: str, input_dim: int, out_dim: int, lags: int = 10, device:str = 'cpu'):
+    if model == "rnn":
+        model = RNN(device=device, input_dim=input_dim, rnn_hidden_size=128, num_rnn_layers=1, rnn_dropout=0.0,
+                    layer_units=[128], num_outputs=out_dim, matrix_rep=True)
+    elif model == "lstm":
+        model = LSTM(device=device, input_dim=input_dim, lstm_hidden_size=128, num_lstm_layers=1,
+                     lstm_dropout=0.0,
+                     layer_units=[128], num_outputs=out_dim, matrix_rep=True)
+    elif model == "gru":
+        model = GRU(device=device, input_dim=input_dim, gru_hidden_size=128, num_gru_layers=1, gru_dropout=0.0,
+                    layer_units=[128], num_outputs=out_dim, matrix_rep=True)
+    elif model == "cnn":
+        model = CNN(device=device, num_features=input_dim, lags=lags, out_dim=out_dim)
+    else:
+        raise NotImplementedError(
+            "Specified model is not implemented. Please define your own model or choose one from ['mlp', 'rnn', 'lstm', 'gru', 'cnn', 'da_encoder_decoder']")
+    return model
+
+
 def mkdir_if_not_exists(path: str):
     if not os.path.exists(path):
         os.makedirs(path)
@@ -235,20 +255,3 @@ def generate_train_test_collections(path):
         test_df.to_csv(f'dataset/FLHousesData/test/{filename}', index_label=False)
     log(INFO, f"Train and test collections saved on {path}")
 
-
-def get_model(args, model: str, input_dim: int, out_dim: int, lags: int = 10):
-    if model == "rnn":
-        model = RNN(device=args.device, input_dim=input_dim, rnn_hidden_size=128, num_rnn_layers=1, rnn_dropout=0.0,
-                    layer_units=[128], num_outputs=out_dim, matrix_rep=True)
-    elif model == "lstm":
-        model = LSTM(device=args.device, input_dim=input_dim, lstm_hidden_size=128, num_lstm_layers=1, lstm_dropout=0.0,
-                     layer_units=[128], num_outputs=out_dim, matrix_rep=True)
-    elif model == "gru":
-        model = GRU(device=args.device, input_dim=input_dim, gru_hidden_size=128, num_gru_layers=1, gru_dropout=0.0,
-                    layer_units=[128], num_outputs=out_dim, matrix_rep=True)
-    elif model == "cnn":
-        model = CNN(device=args.device, num_features=input_dim, lags=lags, out_dim=out_dim)
-    else:
-        raise NotImplementedError(
-            "Specified model is not implemented. Plese define your own model or choose one from ['mlp', 'rnn', 'lstm', 'gru', 'cnn', 'da_encoder_decoder']")
-    return model

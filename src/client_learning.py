@@ -9,11 +9,7 @@ from typing import List, Optional, Union, Any, Dict
 from logging import INFO
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score, mean_pinball_loss
 from collections import OrderedDict
-from src.models.rnn import RNN
-from src.models.lstm import LSTM
-from src.models.gru import GRU
-from src.models.cnn import CNN
-from src.utils.functions import mkdir_if_not_exists, inverse_transform_test
+from src.utils.functions import mkdir_if_not_exists, inverse_transform_test, get_model
 from src.utils.logger import log
 from src.dataset.processing import Processing
 from src.utils.early_stopping import EarlyStopping
@@ -49,7 +45,7 @@ class ClientLearning:
                          indices=[0], batch_size=self.args.batch_size, shuffle=False,
                          num_workers=self.args.num_workers).get_dataloader()
 
-        self.model = self.get_model(args=self.args, model=self.args.model_name, input_dim=self.input_dim,
+        self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
                                         out_dim=self.y_train.shape[1],
                                         lags=self.args.num_lags)
 
@@ -223,24 +219,6 @@ class ClientLearning:
         else:
             log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}")
         return best_model, train_loss_history, test_loss_history
-
-    def get_model(self, args, model: str, input_dim: int, out_dim: int, lags: int = 10):
-        if model == "rnn":
-            model = RNN(device=args.device, input_dim=input_dim, rnn_hidden_size=128, num_rnn_layers=1, rnn_dropout=0.0,
-                        layer_units=[128], num_outputs=out_dim, matrix_rep=True)
-        elif model == "lstm":
-            model = LSTM(device=args.device, input_dim=input_dim, lstm_hidden_size=128, num_lstm_layers=1,
-                         lstm_dropout=0.0,
-                         layer_units=[128], num_outputs=out_dim, matrix_rep=True)
-        elif model == "gru":
-            model = GRU(device=args.device, input_dim=input_dim, gru_hidden_size=128, num_gru_layers=1, gru_dropout=0.0,
-                        layer_units=[128], num_outputs=out_dim, matrix_rep=True)
-        elif model == "cnn":
-            model = CNN(device=args.device, num_features=input_dim, lags=lags, out_dim=out_dim)
-        else:
-            raise NotImplementedError(
-                "Specified model is not implemented. Plese define your own model or choose one from ['mlp', 'rnn', 'lstm', 'gru', 'cnn', 'da_encoder_decoder']")
-        return model
 
     def get_criterion(self, crit_name: str="mse"):
         if crit_name == "mse":

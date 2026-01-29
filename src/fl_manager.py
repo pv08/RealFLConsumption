@@ -6,7 +6,7 @@ from collections import defaultdict
 from logging import INFO, WARNING
 from typing import List, Dict
 from collections import OrderedDict
-from src.utils.functions import mkdir_if_not_exists
+from src.utils.functions import mkdir_if_not_exists, get_model
 from src.utils.logger import log
 
 class FLServerState:
@@ -60,18 +60,21 @@ class FLServerState:
         return [val.cpu().numpy() for _, val in model.state_dict().items()]
 
     def _define_global_model_architecture(self):
-        assert all(set(v for v in self.registered_clients.values())), f"Make sure all the clients have the same architecture"
-        self.global_model = copy.deepcopy(next(iter(self.registered_clients.values())))
+        assert all(set(v['model_name'] for v in self.registered_clients.values())), f"Make sure all the clients have the same architecture"
+        _tmp_obj = next(iter(self.registered_clients.values()))
+        self.global_model = get_model(device=_tmp_obj['device'], model=_tmp_obj['model_name'], input_dim=_tmp_obj['input_dim'],
+                                        out_dim=_tmp_obj['out_dim'],
+                                        lags=_tmp_obj['lags'])
         # Se todos os modelo são iguais, faça uma média
-        weight_list = [self._get_parameters(client) for client in self.registered_clients.values()]
+        weight_list = [client["params"] for client in self.registered_clients.values()]
         self.global_weights = self._aggregate_models(weight_list)
         self.model_name = type(self.global_model).__name__
         log(INFO, f"Global model architecture defined as {type(self.global_model).__name__}")
 
-    def register_client(self, client_id, architecture):
+    def register_client(self, client_id, message_obj):
         if client_id not in self.registered_clients:
-            log(INFO, f"Client {client_id} assigned using {type(architecture).__name__} architecture ")
-            self.registered_clients[client_id]=architecture
+            log(INFO, f"Client {client_id} assigned using {message_obj['model_name'].upper()} architecture ")
+            self.registered_clients[client_id]= message_obj
 
         if self.phase == "WAITING_CLIENTS" and len(self.registered_clients) >= self.required_clients:
             self._define_global_model_architecture()

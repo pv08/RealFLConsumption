@@ -84,7 +84,7 @@ class Message:
 
         if action == "check_in":
             # Registra e verifica se há tarefa (Evaluate, Train, Stop ou Defer)
-            self.fl_state.register_client(client_id, architecture=value["architecture"])
+            self.fl_state.register_client(client_id, value)
             task, data = self.fl_state.check_task(client_id, message_obj=self)
 
             if task == "defer":
