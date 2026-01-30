@@ -3,6 +3,8 @@ import pickle
 import selectors
 import struct
 import sys
+from logging import DEBUG
+from src.utils.logger import log
 
 
 
@@ -35,6 +37,7 @@ class Message:
     def _read(self):
         try:
             data = self.sock.recv(4096)
+            log(DEBUG, data)
         except BlockingIOError:
             pass  # Buffer de entrada vazio, aguarda próxima chamada
         else:
