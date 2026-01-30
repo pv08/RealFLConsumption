@@ -31,7 +31,7 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
             # },
             "environment": [
                 "NVIDIA_VISIBLE_DEVICES=all",
-                "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
+                "PYTORCH_ALLOC_CONF=expandable_segments:True"
             ],
             "shm_size": '1gb',
             "networks": ["fl-network"]
@@ -89,8 +89,8 @@ def main():
     parser.add_argument('--host', type=str, default="0.0.0.0")
     parser.add_argument('--port', type=int, default=65432)
     parser.add_argument('--clients_per_round', type=int, default=3)
-    parser.add_argument('--max_rounds', type=int, default=10)
-    parser.add_argument('--epochs', type=int, default=200)
+    parser.add_argument('--max_rounds', type=int, default=3)
+    parser.add_argument('--epochs', type=int, default=15)
     parser.add_argument('--batch_size', type=int, default=128)
 
     args = parser.parse_args()
