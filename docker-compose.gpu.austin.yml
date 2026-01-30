@@ -3,6 +3,8 @@ services:
     build: .
     image: fl-simulation-img
     container_name: fl_server
+    volumes:
+    - ./etc:/app/etc
     command: python app-server.py --host 0.0.0.0 --required_clients 5 --clients_per_round
       3 --max_rounds 3
     runtime: nvidia
@@ -26,6 +28,8 @@ services:
     image: fl-simulation-img
     runtime: nvidia
     container_name: fl_client_8156
+    volumes:
+    - ./etc:/app/etc
     depends_on:
       fl-server:
         condition: service_started
@@ -53,6 +57,8 @@ services:
     image: fl-simulation-img
     runtime: nvidia
     container_name: fl_client_2335
+    volumes:
+    - ./etc:/app/etc
     depends_on:
       fl-server:
         condition: service_started
@@ -80,6 +86,8 @@ services:
     image: fl-simulation-img
     runtime: nvidia
     container_name: fl_client_9922
+    volumes:
+    - ./etc:/app/etc
     depends_on:
       fl-server:
         condition: service_started
@@ -107,6 +115,8 @@ services:
     image: fl-simulation-img
     runtime: nvidia
     container_name: fl_client_3039
+    volumes:
+    - ./etc:/app/etc
     depends_on:
       fl-server:
         condition: service_started
@@ -134,6 +144,8 @@ services:
     image: fl-simulation-img
     runtime: nvidia
     container_name: fl_client_4031
+    volumes:
+    - ./etc:/app/etc
     depends_on:
       fl-server:
         condition: service_started
