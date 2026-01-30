@@ -29,146 +29,28 @@ services:
       - fl-network
 
 
-  client_661:
-    build: .
-    runtime: nvidia
-    depends_on:
-      fl-server:
-        condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 661 --epochs 200 --batch_size 16 --num_workers 0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.1
-      - CUBLAS_WORKSPACE_CONFIG=:4096:8
-      - PYTORCH_ALLOC_CONF=expandable_segments:True
-    shm_size: '1gb'
-    networks:
-      - fl-network
-
-
-  client_1642:
-    build: .
-    runtime: nvidia
-    depends_on:
-      fl-server:
-        condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 1642 --epochs 200 --batch_size 16 --num_workers 0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.1
-      - CUBLAS_WORKSPACE_CONFIG=:4096:8
-      - PYTORCH_ALLOC_CONF=expandable_segments:True
-    networks:
-      - fl-network
-
-  client_2335:
-    build: .
-    runtime: nvidia
-    depends_on:
-      fl-server:
-        condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 2335 --epochs 200 --batch_size 16 --num_workers 0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.1
-      - CUBLAS_WORKSPACE_CONFIG=:4096:8
-      - PYTORCH_ALLOC_CONF=expandable_segments:True
-    shm_size: '1gb'
-    networks:
-      - fl-network
-
-
-
-  client_2361:
-    build: .
-    runtime: nvidia
-    depends_on:
-      fl-server:
-        condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 2361 --epochs 200 --batch_size 16 --num_workers 0
-    networks:
-      - fl-network
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    shm_size: '1gb'
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.1
-      - CUBLAS_WORKSPACE_CONFIG=:4096:8
-      - PYTORCH_ALLOC_CONF=expandable_segments:True
-
-  client_2818:
-    build: .
-    runtime: nvidia
-    depends_on:
-      fl-server:
-        condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 2818 --epochs 200 --batch_size 16 --num_workers 0
-    networks:
-      - fl-network
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    shm_size: '1gb'
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.1
-      - CUBLAS_WORKSPACE_CONFIG=:4096:8
-      - PYTORCH_ALLOC_CONF=expandable_segments:True
-
-  client_3039:
-    build: .
-    runtime: nvidia
-    depends_on:
-      fl-server:
-        condition: service_healthy
-    command: python app-client.py --host fl-server --filter_bs 3039 --epochs 200 --batch_size 16 --num_workers 0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - GPU_FRACTION=0.1
-      - CUBLAS_WORKSPACE_CONFIG=:4096:8
-      - PYTORCH_ALLOC_CONF=expandable_segments:True
-    shm_size: '1gb'
-    networks:
-      - fl-network
-
+  client:
+      build: .
+      runtime: nvidia
+      depends_on:
+        fl-server:
+          condition: service_healthy
+      deploy:
+        replicas: 25 # Número total de clientes da sua lista
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                count: 1
+                capabilities: [ gpu ]
+      shm_size: '1gb'
+      environment:
+        - FL_SERVER_HOST=fl-server
+        - GPU_FRACTION=0.03 # 3% para cada (0.03 * 25 = 0.75 da GPU)
+        - NVIDIA_VISIBLE_DEVICES=all
+        - CUBLAS_WORKSPACE_CONFIG=:4096:8
+        - PYTORCH_ALLOC_CONF=expandable_segments:True
+        - CLIENT_ID_LIST=8156 2335 9922 3039 4031 8386 7951 3538 9160 5746 1642 6139 2361 3456 9019 661 2818 7800 7536 4767 8565 4373 7901 7719 9278
 
 networks:
   fl-network: # Nome corrigido para bater com os serviços
