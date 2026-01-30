@@ -50,7 +50,7 @@ class Message:
             try:
                 # Should be ready to write
                 sent = self.sock.send(self._send_buffer)
-                log(DEBUG, f"Sending buffer of {len(self._send_buffer)} to {self.addr}")
+                # log(DEBUG, f"Sending buffer of {len(self._send_buffer)} to {self.addr}")
             except BlockingIOError:
                 # Resource temporarily unavailable (errno EWOULDBLOCK)
                 pass
