@@ -19,17 +19,17 @@ class FLServerState:
         self.clients_per_round = clients_per_round
         self.max_rounds = max_rounds
         self.simulation_over = False
-        # Estado do Sistema
+
         self.current_round = 0
         self.registered_clients = defaultdict()
         self.selected_clients = set()
         self.round_in_progress = False
         self.model_name = None
         self.pending_messages = []
-        self.updates_received = {}  # {client_id: weights}
+        self.updates_received = {}
         self.evaluations_received = {}
         self.tests_received = {}
-        # Modelo Global (Simulado - inicialize com a arquitetura real)
+
         self.history = defaultdict(list)
         self.best_loss, self.best_round = np.inf, -1
 
