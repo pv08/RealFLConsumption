@@ -12,6 +12,9 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
             "build": ".",
             "image": "fl-simulation-img",
             "container_name": "fl_server",
+            "volumes": [
+                "./etc:/app/etc",  # Onde os modelos e CSVs globais são salvos
+            ],
             "command": f"python app-server.py --host {host} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds}",
             "runtime": "nvidia",
             "deploy": {
@@ -44,6 +47,9 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
             "image": "fl-simulation-img",
             "runtime": "nvidia",
             "container_name": f"fl_client_{c}",
+            "volumes": [
+                "./etc:/app/etc",  # Onde os modelos e CSVs globais são salvos
+            ],
             "depends_on": {
                 "fl-server": {"condition": "service_started"}
             },
