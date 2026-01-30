@@ -3,8 +3,8 @@ services:
     build: .
     image: fl-simulation-img
     container_name: fl_server
-    command: python app-server.py --host 0.0.0.0 --required_clients 25 --clients_per_round
-      5 --max_rounds 10
+    command: python app-server.py --host 0.0.0.0 --required_clients 5 --clients_per_round
+      3 --max_rounds 10
     runtime: nvidia
     deploy:
       resources:
@@ -35,7 +35,7 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.15
     - CLIENT_ID=8156
     deploy:
       resources:
@@ -61,7 +61,7 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.15
     - CLIENT_ID=2335
     deploy:
       resources:
@@ -87,7 +87,7 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.15
     - CLIENT_ID=9922
     deploy:
       resources:
@@ -113,7 +113,7 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.15
     - CLIENT_ID=3039
     deploy:
       resources:
@@ -139,7 +139,7 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.15
     - CLIENT_ID=4031
     deploy:
       resources:
