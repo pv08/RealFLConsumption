@@ -38,7 +38,7 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
         }
     }
 
-    for c in cids[:5]:
+    for c in cids:
         service_name = f"client_{c}"
         services[service_name] = {
             "image": "fl-simulation-img",
@@ -88,7 +88,7 @@ def main():
     parser.add_argument('--loc', type=str, default='austin', help="[austin, california, newyork, puertorico]")
     parser.add_argument('--host', type=str, default="0.0.0.0")
     parser.add_argument('--port', type=int, default=65432)
-    parser.add_argument('--clients_per_round', type=int, default=5)
+    parser.add_argument('--clients_per_round', type=int, default=3)
     parser.add_argument('--max_rounds', type=int, default=10)
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=128)
@@ -102,7 +102,7 @@ def main():
         "puertorico": [8235,3835,7667,3987,11386,10887,6056,939,4046,11126,10826,1092,1286,1245,7778,2006,2159,11933,2921,8997,371,9911,4204,4749,6406]
     }
     try:
-        cids = localities[args.loc]
+        cids = localities[args.loc][:5]
         gpu_mem_fraction = .75 / len(cids) # 3% para cada cliente = 75% da GPU
     except:
         raise ValueError(f"Location not exist. Try austin, california, newyork or puertorico.")
