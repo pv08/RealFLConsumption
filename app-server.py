@@ -53,6 +53,13 @@ def main():
                     message = key.data
                     try:
                         message.process_events(mask)
+                    except RuntimeError as e:
+                        if "Peer closed" in str(e):
+                            log(INFO, f"Client {message.addr} finished the connection (Check-in/Heartbeat concluded)")
+                            message.close()
+                        else:
+                            log(ERROR, f"RuntimeError com {message.addr}: {e}")
+                            message.close()
                     except Exception:
                         log(ERROR,
                             f"Main: Error: Exception for {message.addr}:\n"

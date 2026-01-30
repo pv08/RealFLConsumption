@@ -97,6 +97,9 @@ class Message:
         if mask & selectors.EVENT_WRITE:
             self.write()
 
+        if self.response is not None:
+            pass
+
     def read(self):
         self._read()
 
