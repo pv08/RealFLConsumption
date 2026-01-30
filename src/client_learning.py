@@ -9,7 +9,7 @@ from typing import List, Optional, Union, Any, Dict
 from logging import INFO
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score, mean_pinball_loss
 from collections import OrderedDict
-from src.utils.functions import mkdir_if_not_exists, inverse_transform_test, get_model
+from src.utils.functions import inverse_transform_test, get_model
 from src.utils.logger import log
 from src.dataset.processing import Processing
 from src.utils.early_stopping import EarlyStopping
@@ -160,7 +160,7 @@ class ClientLearning:
 
         best_model, best_loss, best_epoch = None, -1, -1
         train_loss_history, train_rmse_history = [], []
-        test_loss_history, test_rmse_history, test_pinball_history = [], [], []
+        val_loss_history, val_rmse_history, val_pinball_history = [], [], []
         if early_stopping:
             es_trace = True if log_per == 1 else False
             monitor = EarlyStopping(patience=patience, trace=es_trace)
@@ -186,18 +186,18 @@ class ClientLearning:
             train_loss = sum(epochs_loss) / len(epochs_loss)
             _, train_mse, train_rmse, train_mae, train_mape, train_r2, train_nrmse, mean_pinball = self.test(model, self.train_loader,
                                                                               criterion, device)
-            test_loss, test_mse, test_rmse, test_mae, test_mape, test_r2, test_nrmse, mean_pinball = self.test(model, self.val_loader,
+            val_loss, val_mse, val_rmse, val_mae, val_mape, val_r2, val_nrmse, mean_pinball = self.test(model, self.val_loader,
                                                                                  criterion, device)
-            log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{epochs} | [Train]: loss {train_loss}, mse: {train_mse} | [Test]: loss {test_loss}, mse: {test_mse}")
+            log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{epochs} | [Train]: loss {train_loss:.6f}, MSE: {train_mse:.6f} | [Val]: loss {val_loss:.6f}, MSE: {val_mse:.6f}")
             train_loss_history.append(train_mse)
             train_rmse_history.append(train_rmse)
-            test_loss_history.append(test_mse)
-            test_rmse_history.append(test_rmse)
-            test_pinball_history.append(mean_pinball)
+            val_loss_history.append(val_mse)
+            val_rmse_history.append(val_rmse)
+            val_pinball_history.append(mean_pinball)
 
 
             if early_stopping:
-                monitor(test_loss, model)
+                monitor(val_loss, model)
                 best_loss = abs(monitor.best_score)
                 best_model = monitor.best_model
                 if epoch + 1 > patience:
@@ -210,15 +210,15 @@ class ClientLearning:
                     log(INFO, "Early Stopping")
                     break
             else:
-                if best_loss == -1 or test_loss < best_loss:
-                    best_loss = test_loss
+                if best_loss == -1 or val_loss < best_loss:
+                    best_loss = val_loss
                     best_model = copy.deepcopy(model)
                     best_epoch = epoch + 1
         if early_stopping and epochs > patience:
             log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}, Best Epoch: {best_epoch}")
         else:
             log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}")
-        return best_model, train_loss_history, test_loss_history
+        return best_model, train_loss_history, val_loss_history
 
     def get_criterion(self, crit_name: str="mse"):
         if crit_name == "mse":
