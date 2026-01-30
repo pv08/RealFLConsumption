@@ -1,0 +1,162 @@
+services:
+  fl-server:
+    build: .
+    image: fl-simulation-img
+    container_name: fl_server
+    command: python app-server.py --host 0.0.0.0 --required_clients 5 --clients_per_round
+      3 --max_rounds 10
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    ports:
+    - 65432:65432
+    environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+    - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    shm_size: 1gb
+    networks:
+    - fl-network
+  client_8156:
+    image: fl-simulation-img
+    runtime: nvidia
+    container_name: fl_client_8156
+    depends_on:
+      fl-server:
+        condition: service_started
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      8156 --epochs 200 --batch_size 128 --num_workers 0
+    environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+    - CUBLAS_WORKSPACE_CONFIG=:4096:8
+    - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - GPU_FRACTION=0.15
+    - CLIENT_ID=8156
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    shm_size: 1gb
+    networks:
+    - fl-network
+  client_2335:
+    image: fl-simulation-img
+    runtime: nvidia
+    container_name: fl_client_2335
+    depends_on:
+      fl-server:
+        condition: service_started
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      2335 --epochs 200 --batch_size 128 --num_workers 0
+    environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+    - CUBLAS_WORKSPACE_CONFIG=:4096:8
+    - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - GPU_FRACTION=0.15
+    - CLIENT_ID=2335
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    shm_size: 1gb
+    networks:
+    - fl-network
+  client_9922:
+    image: fl-simulation-img
+    runtime: nvidia
+    container_name: fl_client_9922
+    depends_on:
+      fl-server:
+        condition: service_started
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      9922 --epochs 200 --batch_size 128 --num_workers 0
+    environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+    - CUBLAS_WORKSPACE_CONFIG=:4096:8
+    - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - GPU_FRACTION=0.15
+    - CLIENT_ID=9922
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    shm_size: 1gb
+    networks:
+    - fl-network
+  client_3039:
+    image: fl-simulation-img
+    runtime: nvidia
+    container_name: fl_client_3039
+    depends_on:
+      fl-server:
+        condition: service_started
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      3039 --epochs 200 --batch_size 128 --num_workers 0
+    environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+    - CUBLAS_WORKSPACE_CONFIG=:4096:8
+    - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - GPU_FRACTION=0.15
+    - CLIENT_ID=3039
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    shm_size: 1gb
+    networks:
+    - fl-network
+  client_4031:
+    image: fl-simulation-img
+    runtime: nvidia
+    container_name: fl_client_4031
+    depends_on:
+      fl-server:
+        condition: service_started
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      4031 --epochs 200 --batch_size 128 --num_workers 0
+    environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+    - CUBLAS_WORKSPACE_CONFIG=:4096:8
+    - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - GPU_FRACTION=0.15
+    - CLIENT_ID=4031
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    shm_size: 1gb
+    networks:
+    - fl-network
+networks:
+  fl-network:
+    driver: bridge
