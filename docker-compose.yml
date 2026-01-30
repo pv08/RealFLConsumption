@@ -2,7 +2,7 @@ services:
   fl-server:
     build: .
     container_name: fl-server
-    command: python app-server.py --host 0.0.0.0 --clients_per_round 3 --required_clients 6 --max_rounds 10
+    command: python app-server.py --host 0.0.0.0 --clients_per_round 5 --required_clients ${NUM_CLIENTS} --max_rounds 10
     runtime: nvidia
     deploy:
       resources:
@@ -36,7 +36,7 @@ services:
         fl-server:
           condition: service_healthy
       deploy:
-        replicas: 25 # Número total de clientes da sua lista
+        replicas: ${NUM_CLIENTS}
         resources:
           reservations:
             devices:
@@ -45,12 +45,13 @@ services:
                 capabilities: [ gpu ]
       shm_size: '1gb'
       environment:
+        - EPOCHS=200
+        - LOCALITY=${CURRENT_LOCALITY}
         - FL_SERVER_HOST=fl-server
-        - GPU_FRACTION=0.03 # 3% para cada (0.03 * 25 = 0.75 da GPU)
+        - GPU_FRACTION=${GPU_FRAC} # 3% para cada (0.03 * 25 = 0.75 da GPU)
         - NVIDIA_VISIBLE_DEVICES=all
         - CUBLAS_WORKSPACE_CONFIG=:4096:8
         - PYTORCH_ALLOC_CONF=expandable_segments:True
-        - CLIENT_ID_LIST=8156 2335 9922 3039 4031 8386 7951 3538 9160 5746 1642 6139 2361 3456 9019 661 2818 7800 7536 4767 8565 4373 7901 7719 9278
 
 networks:
   fl-network: # Nome corrigido para bater com os serviços
