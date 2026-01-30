@@ -38,7 +38,7 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
         }
     }
 
-    for c in cids:
+    for c in cids[:10]:
         service_name = f"client_{c}"
         services[service_name] = {
             "image": "fl-simulation-img",
