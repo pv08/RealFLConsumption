@@ -30,7 +30,7 @@ services:
       fl-server:
         condition: service_started
     command: python app-client.py --data_path "dataset/pecanstreet/15min/austin/train/"
-      -test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
+      --test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
       8156 --epochs 15 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
@@ -57,7 +57,7 @@ services:
       fl-server:
         condition: service_started
     command: python app-client.py --data_path "dataset/pecanstreet/15min/austin/train/"
-      -test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
+      --test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
       2335 --epochs 15 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
@@ -84,7 +84,7 @@ services:
       fl-server:
         condition: service_started
     command: python app-client.py --data_path "dataset/pecanstreet/15min/austin/train/"
-      -test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
+      --test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
       9922 --epochs 15 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
@@ -111,7 +111,7 @@ services:
       fl-server:
         condition: service_started
     command: python app-client.py --data_path "dataset/pecanstreet/15min/austin/train/"
-      -test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
+      --test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
       3039 --epochs 15 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
@@ -138,7 +138,7 @@ services:
       fl-server:
         condition: service_started
     command: python app-client.py --data_path "dataset/pecanstreet/15min/austin/train/"
-      -test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
+      --test_path "dataset/pecanstreet/15min/austin/test/"  --host fl-server --filter_bs
       4031 --epochs 15 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
