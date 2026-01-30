@@ -56,8 +56,6 @@ echo "------------------------------------------------"
 # 5. Executa a aplicação passando o ID REAL
 # O exec substitui o processo shell pelo python (economiza memória)
 exec python app-client.py \
-    --host "${FL_SERVER_HOST:-fl-server}" \
-    --port "${FL_SERVER_PORT:-65432}" \
     --data_path "dataset/pecanstreet/15min/${TARGET_LOC}/train/"\
     --test_path "dataset/pecanstreet/15min/${TARGET_LOC}/test/"\
     --filter_bs "$REAL_CLIENT_ID" \
