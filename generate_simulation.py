@@ -47,7 +47,7 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
             "depends_on": {
                 "fl-server": {"condition": "service_started"}
             },
-            "command": f"python app-client.py --host fl-server --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers 0",
+            "command": f"python app-client.py --data_path 'dataset/pecanstreet/15min/{location}/train/' -test_path 'dataset/pecanstreet/15min/{location}/test/'  --host fl-server --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers 0",
             "environment": [
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "CUBLAS_WORKSPACE_CONFIG=:4096:8",

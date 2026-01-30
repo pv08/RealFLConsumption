@@ -29,8 +29,9 @@ services:
     depends_on:
       fl-server:
         condition: service_started
-    command: python app-client.py --host fl-server --filter_bs 8156 --epochs 200 --batch_size
-      128 --num_workers 0
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      8156 --epochs 200 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
@@ -55,8 +56,9 @@ services:
     depends_on:
       fl-server:
         condition: service_started
-    command: python app-client.py --host fl-server --filter_bs 2335 --epochs 200 --batch_size
-      128 --num_workers 0
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      2335 --epochs 200 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
@@ -81,8 +83,9 @@ services:
     depends_on:
       fl-server:
         condition: service_started
-    command: python app-client.py --host fl-server --filter_bs 9922 --epochs 200 --batch_size
-      128 --num_workers 0
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      9922 --epochs 200 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
@@ -107,8 +110,9 @@ services:
     depends_on:
       fl-server:
         condition: service_started
-    command: python app-client.py --host fl-server --filter_bs 3039 --epochs 200 --batch_size
-      128 --num_workers 0
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      3039 --epochs 200 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
@@ -133,8 +137,9 @@ services:
     depends_on:
       fl-server:
         condition: service_started
-    command: python app-client.py --host fl-server --filter_bs 4031 --epochs 200 --batch_size
-      128 --num_workers 0
+    command: python app-client.py --data_path 'dataset/pecanstreet/15min/$austin/train/'
+      -test_path 'dataset/pecanstreet/15min/austin/test/'  --host fl-server --filter_bs
+      4031 --epochs 200 --batch_size 128 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
