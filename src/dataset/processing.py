@@ -551,7 +551,7 @@ class Processing(Data):
         return df
 
     def get_data_shape(self):
-        X_train, _, y_train, _, _, _ = self.make_preprocessing(filter_bs=self.args.cid, per_area=False)
+        X_train, _, y_train, _, _, _ = self.make_preprocessing(filter_bs=self.args.filter_bs, per_area=False)
         input_dim = self.get_input_dims(X_train)
         output_dim = y_train.shape[1]
         return input_dim, output_dim
