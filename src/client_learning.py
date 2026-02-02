@@ -89,28 +89,17 @@ class ClientLearning:
         if model:
             self.set_parameters(model)
 
-
-
+        if self.train_loader or self.val_loader is None:
+            self._load_data()
         if data is None and method == 'test':
-            data = TimeSeriesLoader(X=self.X_val,
-                         y=self.y_val,
-                         num_lags=self.args.num_lags,
-                         num_features=self.input_dim,
-                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
-                         num_workers=self.args.num_workers).get_dataloader()
+            data = self.val_loader
         if data is None and method == 'train':
-            data = TimeSeriesLoader(X=self.X_train,
-                         y=self.y_train,
-                         num_lags=self.args.num_lags,
-                         num_features=self.input_dim,
-                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
-                         num_workers=self.args.num_workers).get_dataloader()
+            data = self.train_loader
 
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         _instances = len(data.dataset)
-        data = None
-        gc.collect()
+        self._unload_data()
         return _instances, loss, metrics
 
     def test_model(self, params):
