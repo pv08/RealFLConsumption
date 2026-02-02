@@ -62,9 +62,7 @@ class FLServerState:
     def _define_global_model_architecture(self):
         assert all(set(v['model_name'] for v in self.registered_clients.values())), f"Make sure all the clients have the same architecture"
         _tmp_obj = next(iter(self.registered_clients.values()))
-        self.global_model = get_model(device=_tmp_obj['device'], model=_tmp_obj['model_name'], input_dim=_tmp_obj['input_dim'],
-                                        out_dim=_tmp_obj['out_dim'],
-                                        lags=_tmp_obj['lags'])
+        self.global_model = _tmp_obj['architecture']
         # Se todos os modelo são iguais, faça uma média
         weight_list = [client["params"] for client in self.registered_clients.values()]
         self.global_weights = self._aggregate_models(weight_list)

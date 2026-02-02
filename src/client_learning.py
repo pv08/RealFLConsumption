@@ -21,33 +21,13 @@ class ClientLearning:
         self.cid = cid
         self.seed_all(seed)
         self.processing = Processing(args=self.args, data_path=self.args.data_path)
-        X_train, X_val, y_train, y_val, self.x_scaler, self.y_scaler = self.processing.make_preprocessing(filter_bs=self.cid, per_area=False)
-
-        self.X_train, self.X_val, self.y_train, self.y_val, self.client_X_train, self.client_X_val, self.client_y_train, self.client_y_val = (
-            self.processing.make_postprocessing(X_train, X_val, y_train, y_val))
-
-
+        self.X_train, self.X_val, self.y_train, self.y_val, self.x_scaler, self.y_scaler = self.processing.make_preprocessing(filter_bs=self.cid, per_area=False)
 
         self.input_dim = self.processing.get_input_dims(self.X_train)
 
-        self.train_loader = TimeSeriesLoader(X=self.X_train,
-                         y=self.y_train,
-                         num_lags=self.args.num_lags,
-                         num_features=self.input_dim,
-                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
-                         num_workers=self.args.num_workers).get_dataloader()
-
-
-        self.val_loader = TimeSeriesLoader(X=self.X_val,
-                         y=self.y_val,
-                         num_lags=self.args.num_lags,
-                         num_features=self.input_dim,
-                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
-                         num_workers=self.args.num_workers).get_dataloader()
-
         self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
-                                        out_dim=self.y_train.shape[1],
-                                        lags=self.args.num_lags)
+                               out_dim=self.y_train.shape[1],
+                               lags=self.args.num_lags)
 
 
     def set_parameters(self, params: Union[List[np.ndarray], nn.Module]):
@@ -62,16 +42,32 @@ class ClientLearning:
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
 
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
+        train_loader = TimeSeriesLoader(X=self.X_train,
+                         y=self.y_train,
+                         num_lags=self.args.num_lags,
+                         num_features=self.input_dim,
+                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
+                         num_workers=self.args.num_workers).get_dataloader()
+
+
+        val_loader = TimeSeriesLoader(X=self.X_val,
+                         y=self.y_val,
+                         num_lags=self.args.num_lags,
+                         num_features=self.input_dim,
+                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
+                         num_workers=self.args.num_workers).get_dataloader()
+
+
         self.set_parameters(params)
         self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
                                                             optimizer=optimizer, lr=lr, criterion=criterion,
                                                             early_stopping=early_stopping, patience=patience,
                                                             device=device)
 
-        _, train_loss, train_metrics = self.evaluate(self.train_loader)
-        num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
+        _, train_loss, train_metrics = self.evaluate(train_loader)
+        num_val, val_loss, val_metrics = self.evaluate(val_loader)
 
-        return self.get_parameters(), train_loss_history, len(self.train_loader.dataset), train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
+        return self.get_parameters(), train_loss_history, len(train_loader.dataset), train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
 
 
     def evaluate(self, data: Optional[Union[np.ndarray, DataLoader]]=None,
@@ -87,10 +83,22 @@ class ClientLearning:
         if model:
             self.set_parameters(model)
 
+
+
         if data is None and method == 'test':
-            data = self.val_loader
+            data = TimeSeriesLoader(X=self.X_val,
+                         y=self.y_val,
+                         num_lags=self.args.num_lags,
+                         num_features=self.input_dim,
+                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
+                         num_workers=self.args.num_workers).get_dataloader()
         if data is None and method == 'train':
-            data = self.train_loader
+            data = TimeSeriesLoader(X=self.X_train,
+                         y=self.y_train,
+                         num_lags=self.args.num_lags,
+                         num_features=self.input_dim,
+                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
+                         num_workers=self.args.num_workers).get_dataloader()
 
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
@@ -102,13 +110,13 @@ class ClientLearning:
                                                                                       x_scaler=self.x_scaler,
                                                                                       y_scaler=self.y_scaler)
 
-        self.test_loader = TimeSeriesLoader(X=self.X_test, y=self.y_test,
+        test_loader = TimeSeriesLoader(X=self.X_test, y=self.y_test,
                                        num_lags=self.args.num_lags,
                                        num_features=num_features,
                                        indices=[0], batch_size=self.args.batch_size, shuffle=False,
                                        num_workers=self.args.num_workers).get_dataloader()
 
-        test_mse, test_rmse, test_mae, test_mape, test_r2, test_nrmse, pinball, _, y_pred_test = self.test(self.model, self.test_loader,
+        test_mse, test_rmse, test_mae, test_mape, test_r2, test_nrmse, pinball, _, y_pred_test = self.test(self.model, test_loader,
                                                                                                     None,
                                                                                                     device=self.args.device)
 

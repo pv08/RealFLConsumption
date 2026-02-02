@@ -597,30 +597,6 @@ class Processing(Data):
         y_train = self.generate_time_lags(y_train, self.args.num_lags, is_y=True)
         y_val = self.generate_time_lags(y_val, self.args.num_lags, is_y=True)
 
-        return X_train, X_val, y_train, y_val, x_scaler, y_scaler
-
-    def make_postprocessing(self, X_train, X_val, y_train, y_val):
-        if X_train[self.args.identifier].nunique() != 1:
-            area_X_train, area_X_val, area_y_train, area_y_val = self.get_data_by_area(X_train, X_val,
-                                                                                  y_train, y_val,
-                                                                                  identifier=self.args.identifier)
-        else:
-            area_X_train, area_X_val, area_y_train, area_y_val = None, None, None, None
-
-        if area_X_train is not None:
-            for area in area_X_train:
-                tmp_X_train, tmp_y_train, tmp_X_val, tmp_y_val = self.remove_identifiers(
-                    area_X_train[area], area_y_train[area], area_X_val[area], area_y_val[area])
-                tmp_X_train, tmp_y_train = tmp_X_train.to_numpy(), tmp_y_train.to_numpy()
-                tmp_X_val, tmp_y_val = tmp_X_val.to_numpy(), tmp_y_val.to_numpy()
-
-                area_X_train[area] = tmp_X_train
-                area_X_val[area] = tmp_X_val
-
-                area_y_train[area] = tmp_y_train
-                area_y_val[area] = tmp_y_val
-
-
         X_train, y_train, X_val, y_val = self.remove_identifiers(X_train, y_train, X_val, y_val)
         assert len(X_train.columns) == len(X_val.columns)
 
@@ -631,16 +607,11 @@ class Processing(Data):
         X_val = self.to_timeseries_rep(X_val.to_numpy(), num_lags=self.args.num_lags,
                                   num_features=num_features)
 
-        if area_X_train is not None:
-            area_X_train = self.to_timeseries_rep(area_X_train, num_lags=self.args.num_lags,
-                                             num_features=num_features)
-            area_X_val = self.to_timeseries_rep(area_X_val, num_lags=self.args.num_lags,
-                                           num_features=num_features)
-
         y_train, y_val = y_train.to_numpy(), y_val.to_numpy()
 
         # centralized (all) learning specific
-        return X_train, X_val, y_train, y_val, area_X_train, area_X_val, area_y_train, area_y_val
+        return X_train, X_val, y_train, y_val, x_scaler, y_scaler
+
 
     def make_test_processing(self, filter_data, x_scaler, y_scaler):
         df = pd.read_csv(f"{self.args.test_path}/{filter_data}.csv")
