@@ -37,7 +37,7 @@ class ClientLearning:
                                lags=self.args.num_lags)
 
     def _load_data(self):
-        self.X_train, self.X_val, self.y_train, self.y_val, self.x_scaler, self.y_scaler = self.processing.make_preprocessing(filter_bs=self.cid, per_area=False)
+        self.X_train, self.X_val, self.y_train, self.y_val, self.x_scaler, self.y_scaler = self.processing.make_preprocessing(filter_bs=self.cid, per_area=False, peek=False)
 
     def _unload_data(self):
         log(INFO, f"Client {self.cid}: Unloading data from RAM.")
