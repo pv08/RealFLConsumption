@@ -108,7 +108,7 @@ def main():
         "puertorico": [8235,3835,7667,3987,11386,10887,6056,939,4046,11126,10826,1092,1286,1245,7778,2006,2159,11933,2921,8997,371,9911,4204,4749,6406]
     }
     try:
-        cids = localities[args.loc][:5]
+        cids = localities[args.loc]
         gpu_mem_fraction = .75 / len(cids) # 3% para cada cliente = 75% da GPU
     except:
         raise ValueError(f"Location not exist. Try austin, california, newyork or puertorico.")
