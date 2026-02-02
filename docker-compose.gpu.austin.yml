@@ -21,7 +21,9 @@ services:
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - PYTORCH_ALLOC_CONF=expandable_segments:True
-    shm_size: 1gb
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
+    ipc: host
     networks:
     - fl-network
   client_8156:
@@ -40,6 +42,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=8156
     deploy:
@@ -50,7 +54,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_2335:
@@ -69,6 +73,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=2335
     deploy:
@@ -79,7 +85,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_9922:
@@ -98,6 +104,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=9922
     deploy:
@@ -108,7 +116,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_3039:
@@ -127,6 +135,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=3039
     deploy:
@@ -137,7 +147,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_4031:
@@ -156,6 +166,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=4031
     deploy:
@@ -166,7 +178,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_8386:
@@ -185,6 +197,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=8386
     deploy:
@@ -195,7 +209,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_7951:
@@ -214,6 +228,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=7951
     deploy:
@@ -224,7 +240,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_3538:
@@ -243,6 +259,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=3538
     deploy:
@@ -253,7 +271,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_9160:
@@ -272,6 +290,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=9160
     deploy:
@@ -282,7 +302,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_5746:
@@ -301,6 +321,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=5746
     deploy:
@@ -311,7 +333,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_1642:
@@ -330,6 +352,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=1642
     deploy:
@@ -340,7 +364,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_6139:
@@ -359,6 +383,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=6139
     deploy:
@@ -369,7 +395,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_2361:
@@ -388,6 +414,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=2361
     deploy:
@@ -398,7 +426,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_3456:
@@ -417,6 +445,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=3456
     deploy:
@@ -427,7 +457,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_9019:
@@ -446,6 +476,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=9019
     deploy:
@@ -456,7 +488,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_661:
@@ -475,6 +507,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=661
     deploy:
@@ -485,7 +519,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_2818:
@@ -504,6 +538,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=2818
     deploy:
@@ -514,7 +550,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_7800:
@@ -533,6 +569,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=7800
     deploy:
@@ -543,7 +581,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_7536:
@@ -562,6 +600,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=7536
     deploy:
@@ -572,7 +612,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_4767:
@@ -591,6 +631,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=4767
     deploy:
@@ -601,7 +643,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_8565:
@@ -620,6 +662,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=8565
     deploy:
@@ -630,7 +674,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_4373:
@@ -649,6 +693,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=4373
     deploy:
@@ -659,7 +705,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_7901:
@@ -678,6 +724,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=7901
     deploy:
@@ -688,7 +736,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_7719:
@@ -707,6 +755,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=7719
     deploy:
@@ -717,7 +767,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
   client_9278:
@@ -736,6 +786,8 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
+    - MALLOC_ARENA_MAX=2
+    - OMP_NUM_THREADS=1
     - GPU_FRACTION=0.03
     - CLIENT_ID=9278
     deploy:
@@ -746,7 +798,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    shm_size: 1gb
+    ipc: host
     networks:
     - fl-network
 networks:
