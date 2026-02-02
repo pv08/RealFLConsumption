@@ -22,6 +22,8 @@ class ClientLearning:
         self.cid = cid
         self.seed_all(seed)
         self.processing = Processing(args=self.args, data_path=self.args.data_path)
+        self.train_loader = None
+        self.val_loader = None
         self.X_train = None
         self.X_val = None
         self.y_train = None
