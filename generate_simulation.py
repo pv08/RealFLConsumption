@@ -34,9 +34,11 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
             # },
             "environment": [
                 "NVIDIA_VISIBLE_DEVICES=all",
-                "PYTORCH_ALLOC_CONF=expandable_segments:True"
+                "PYTORCH_ALLOC_CONF=expandable_segments:True",
+                "MALLOC_ARENA_MAX=2",
+                "OMP_NUM_THREADS=1",
             ],
-            "shm_size": '1gb',
+            "ipc": 'host',
             "networks": ["fl-network"]
         }
     }
@@ -58,6 +60,8 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "CUBLAS_WORKSPACE_CONFIG=:4096:8",
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
+                "MALLOC_ARENA_MAX=2",
+                "OMP_NUM_THREADS=1",
                 f"GPU_FRACTION={mem_fraction}",
                 f"CLIENT_ID={c}"
             ],
@@ -68,7 +72,7 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
                     }
                 }
             },
-            "shm_size": '1gb',
+            "ipc": 'host',
             "networks": ["fl-network"]
         }
 
