@@ -90,7 +90,7 @@ class Data(ABC):
 
     def read_data(self, filter_data: str, peek: bool=False):
         if peek:
-            df = pd.read_csv(f"{self.data_path}/{filter_data}.csv", nrows=5)
+            df = pd.read_csv(f"{self.data_path}/{filter_data}.csv", nrows=1000)
         else:
             df = pd.read_csv(f"{self.data_path}/{filter_data}.csv")
         if filter_data is not None:
