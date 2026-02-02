@@ -94,7 +94,7 @@ def main():
     parser.add_argument('--loc', type=str, default='austin', help="[austin, california, newyork, puertorico]")
     parser.add_argument('--host', type=str, default="0.0.0.0")
     parser.add_argument('--port', type=int, default=65432)
-    parser.add_argument('--clients_per_round', type=int, default=3)
+    parser.add_argument('--clients_per_round', type=int, default=5)
     parser.add_argument('--max_rounds', type=int, default=3)
     parser.add_argument('--epochs', type=int, default=15)
     parser.add_argument('--batch_size', type=int, default=128)

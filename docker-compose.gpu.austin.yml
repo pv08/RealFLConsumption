@@ -6,7 +6,7 @@ services:
     volumes:
     - ./etc:/app/etc
     command: python app-server.py --host 0.0.0.0 --required_clients 25 --clients_per_round
-      3 --max_rounds 3
+      5 --max_rounds 3
     runtime: nvidia
     deploy:
       resources:
