@@ -88,29 +88,19 @@ class Data(ABC):
             b = np.where(b > high_percentile_val, high_percentile_val, b)
             return b
 
-    def read_data(self, filter_data: str):
-        if filter_data == 'community':
-            df = pd.read_csv(f"{self.data_path}/community.csv")
-            df.drop("Date", axis=1, inplace=True)
-            cols = [col for col in df.columns if col not in ["cid"]]
-            df[cols] = df[cols].astype('float32')
-            return df
-
-        if Path(f"{self.data_path}/{filter_data}.csv").exists():
-            df = pd.read_csv(f"{self.data_path}/"
-                             f"{filter_data}.csv")
-            if filter_data is not None:
-                log(INFO, f"Reading {filter_data}'s data...")
-                df = df.loc[df['cid'] == int(filter_data)]
-            df.drop("Date", axis=1, inplace=True)
-            cols = [col for col in df.columns if col not in ["cid"]]
-            df[cols] = df[cols].astype('float32')
-            log(INFO, f"{filter_data}'s data shape: {df.shape}")
-            return df
+    def read_data(self, filter_data: str, peek: bool=False):
+        if peek:
+            df = pd.read_csv(f"{self.data_path}/{filter_data}.csv", nrows=5)
         else:
-            self.concat_datasets()
-            raise KeyboardInterrupt(f"Full dataset exported. Please run the script again...")
-
+            df = pd.read_csv(f"{self.data_path}/{filter_data}.csv")
+        if filter_data is not None:
+            log(INFO, f"Reading {filter_data}'s data...")
+            df = df.loc[df['cid'] == int(filter_data)]
+        df.drop("Date", axis=1, inplace=True)
+        cols = [col for col in df.columns if col not in ["cid"]]
+        df[cols] = df[cols].astype('float32')
+        log(INFO, f"{filter_data}'s data shape: {df.shape}")
+        return df
 
     def concat_datasets(self):
         files = glob.glob(f"{self.data_path}/*.csv", recursive=True)
@@ -560,6 +550,11 @@ class Processing(Data):
         df.drop("Date", axis=1, inplace=True)
         return df
 
+    def get_data_shape(self):
+        X_train, _, y_train, _, _, _ = self.make_preprocessing(filter_bs=self.args.cid, per_area=False)
+        input_dim = self.get_input_dims(X_train)
+        output_dim = y_train.shape[1]
+        return input_dim, output_dim
 
     def get_input_dims(self, X_train):
         if self.args.model_name == "mlp":

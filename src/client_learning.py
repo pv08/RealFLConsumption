@@ -4,6 +4,7 @@ import numpy as np
 import torch as T
 import torch.nn as nn
 import math
+import gc
 from torch.utils.data import DataLoader
 from typing import List, Optional, Union, Any, Dict
 from logging import INFO
@@ -21,14 +22,32 @@ class ClientLearning:
         self.cid = cid
         self.seed_all(seed)
         self.processing = Processing(args=self.args, data_path=self.args.data_path)
-        self.X_train, self.X_val, self.y_train, self.y_val, self.x_scaler, self.y_scaler = self.processing.make_preprocessing(filter_bs=self.cid, per_area=False)
+        self.X_train = None
+        self.X_val = None
+        self.y_train = None
+        self.y_val = None
+        self.x_scaler = None
+        self.y_scaler = None
 
-        self.input_dim = self.processing.get_input_dims(self.X_train)
+        self.input_dim, self.output_dim = self.processing.get_data_shape()
+
 
         self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
-                               out_dim=self.y_train.shape[1],
+                               out_dim=self.output_dim,
                                lags=self.args.num_lags)
 
+    def _load_data(self):
+        self.X_train, self.X_val, self.y_train, self.y_val, self.x_scaler, self.y_scaler = self.processing.make_preprocessing(filter_bs=self.cid, per_area=False)
+
+    def _unload_data(self):
+        log(INFO, f"Client {self.cid}: Unloading data from RAM.")
+        self.train_loader = None
+        self.val_loader = None
+        self.X_train = None
+        self.y_train = None
+        self.X_val = None
+        self.y_val = None
+        gc.collect()
 
     def set_parameters(self, params: Union[List[np.ndarray], nn.Module]):
         if not isinstance(params, nn.Module):
@@ -42,32 +61,19 @@ class ClientLearning:
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
 
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
-        train_loader = TimeSeriesLoader(X=self.X_train,
-                         y=self.y_train,
-                         num_lags=self.args.num_lags,
-                         num_features=self.input_dim,
-                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
-                         num_workers=self.args.num_workers).get_dataloader()
-
-
-        val_loader = TimeSeriesLoader(X=self.X_val,
-                         y=self.y_val,
-                         num_lags=self.args.num_lags,
-                         num_features=self.input_dim,
-                         indices=[0], batch_size=self.args.batch_size, shuffle=False,
-                         num_workers=self.args.num_workers).get_dataloader()
-
-
         self.set_parameters(params)
+        if self.train_loader is None or self.val_loader is None:
+            self._load_data()
         self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
                                                             optimizer=optimizer, lr=lr, criterion=criterion,
                                                             early_stopping=early_stopping, patience=patience,
                                                             device=device)
 
-        _, train_loss, train_metrics = self.evaluate(train_loader)
-        num_val, val_loss, val_metrics = self.evaluate(val_loader)
-
-        return self.get_parameters(), train_loss_history, len(train_loader.dataset), train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
+        _, train_loss, train_metrics = self.evaluate(self.train_loader)
+        num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
+        _train_instances = len(self.train_loader.dataset)
+        self._unload_data()
+        return self.get_parameters(), train_loss_history, _train_instances, train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
 
 
     def evaluate(self, data: Optional[Union[np.ndarray, DataLoader]]=None,
@@ -102,7 +108,10 @@ class ClientLearning:
 
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
-        return len(data.dataset), loss, metrics
+        _instances = len(data.dataset)
+        data = None
+        gc.collect()
+        return _instances, loss, metrics
 
     def test_model(self, params):
         self.set_parameters(params)
