@@ -37,9 +37,9 @@ class LSTM(torch.nn.Module):
             x = x.view([x.size(0), -1, x.size(1)])
         else:
             x = x.reshape(x.size(0), x.size(1), x.size(2))
-
-        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(self.device)
-        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(self.device)
+        device = x.device
+        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
 
         out, (_, _) = self.lstm(x, (h0.detach(), c0.detach()))
         out = out[:, -1, :]
