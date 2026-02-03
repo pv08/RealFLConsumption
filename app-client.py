@@ -65,6 +65,7 @@ def main():
     # 1. Communication args
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
+    parser.add_argument('--mongo_uri', type=str, default="mongodb://localhost:27017/")
 
     # 2. Data args
     parser.add_argument("--data_path", type=str, default='dataset/pecanstreet/15min/austin/train/')

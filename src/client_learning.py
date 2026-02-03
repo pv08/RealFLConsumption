@@ -1,3 +1,4 @@
+import pickle
 import random
 import copy
 import numpy as np
@@ -5,6 +6,9 @@ import torch as T
 import torch.nn as nn
 import math
 import gc
+
+from pygments.lexers.c_like import ValaLexer
+from pymongo import MongoClient
 from torch.utils.data import DataLoader
 from typing import List, Optional, Union, Any, Dict
 from logging import INFO
@@ -12,7 +16,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from collections import OrderedDict
 from src.utils.functions import inverse_transform_test, get_model
 from src.utils.logger import log
-from src.dataset.processing import Processing
+from src.data import MongoDBDataset
 from src.utils.early_stopping import EarlyStopping
 from src.data import TimeSeriesLoader
 
@@ -21,17 +25,23 @@ class ClientLearning:
         self.args = args
         self.cid = cid
         self.seed_all(seed)
-        self.processing = Processing(args=self.args, data_path=self.args.data_path)
+
+        with MongoClient(args.mongo_uri) as client:
+            _db = client["pecanstreet"]
+            _meta_col = _db["metadata"]
+            _meta_doc = _meta_col.find_one({"client_id": int(self.cid)})
+
+            if not _meta_doc:
+                raise ValueError(f"{self.cid}'s metadata not found")
+
+            self.input_dim = _meta_doc["input_dim"]
+            self.output_dim = _meta_doc["output_dim"]
+            self.x_scaler = pickle.loads(_meta_doc["x_scaler"])
+            self.y_scaler = pickle.loads(_meta_doc["y_scaler"])
+            client.close()
+
         self.train_loader = None
         self.val_loader = None
-        self.X_train = None
-        self.X_val = None
-        self.y_train = None
-        self.y_val = None
-        self.x_scaler = None
-        self.y_scaler = None
-
-        self.input_dim, self.output_dim = self.processing.get_data_shape()
 
 
         self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
@@ -39,17 +49,11 @@ class ClientLearning:
                                lags=self.args.num_lags)
 
     def _load_data(self):
-        self.X_train, self.X_val, self.y_train, self.y_val, self.x_scaler, self.y_scaler = self.processing.make_preprocessing(filter_bs=self.cid, per_area=False, peek=False)
+        train_dataset = MongoDBDataset(_id=self.cid, _type="train", mongo_uri=self.args.mongo_uri)
+        val_dataset = MongoDBDataset(_id=self.cid, _type="val", mongo_uri=self.args.mongo_uri)
+        self.train_loader = DataLoader(train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
+        self.val_loader = DataLoader(val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
 
-    def _unload_data(self):
-        log(INFO, f"Client {self.cid}: Unloading data from RAM.")
-        self.train_loader = None
-        self.val_loader = None
-        self.X_train = None
-        self.y_train = None
-        self.X_val = None
-        self.y_val = None
-        gc.collect()
 
     def set_parameters(self, params: Union[List[np.ndarray], nn.Module]):
         if not isinstance(params, nn.Module):
@@ -64,7 +68,7 @@ class ClientLearning:
 
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
         self.set_parameters(params)
-        if self.train_loader is None or self.val_loader is None:
+        if self.train_loader or self.val_loader is None:
             self._load_data()
         self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
                                                             optimizer=optimizer, lr=lr, criterion=criterion,
@@ -74,7 +78,6 @@ class ClientLearning:
         _, train_loss, train_metrics = self.evaluate(self.train_loader)
         num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
         _train_instances = len(self.train_loader.dataset)
-        self._unload_data()
         return self.get_parameters(), train_loss_history, _train_instances, train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
 
 
@@ -101,7 +104,6 @@ class ClientLearning:
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         _instances = len(data.dataset)
-        self._unload_data()
         return _instances, loss, metrics
 
     def test_model(self, params):

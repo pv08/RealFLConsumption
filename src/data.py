@@ -1,7 +1,43 @@
 import torch as T
+import pickle
 import numpy as np
+from pymongo import MongoClient
 from torch.utils.data import DataLoader, Dataset
 from typing import List, Optional
+
+class MongoDBDataset(Dataset):
+    def __init__(self, _id, _type, mongo_uri):
+        self._id = _id
+        self._type = _type
+        self.mongo_uri = mongo_uri
+
+        self.db_name = "pecanstreet"
+        self.collection_name = "samples"
+
+        client = MongoClient(self.mongo_uri)
+        col = client[self.db_name][self.collection_name]
+        self.doc_ids = list(col.find(
+            {"client_id": int(self._id), "type": _type},
+            {"_id": 1},
+        ))
+
+        client.close()
+
+    def __len__(self):
+        return len(self.doc_ids)
+
+    def __getitem__(self, idx):
+        with MongoClient(self.mongo_uri) as client:
+            col = client[self.db_name][self.collection_name]
+            _id = self.doc_ids[idx]["_id"]
+            _data = col.find_one({"_id": _id})
+
+            X = pickle.loads(_data["X"])
+            y = pickle.loads(_data["y"])
+
+            return T.tensor(X).float(), T.tensor(y).float()
+
+
 
 
 class TimeSeriesLoader:
