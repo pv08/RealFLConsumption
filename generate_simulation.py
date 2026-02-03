@@ -30,6 +30,9 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
                 "MALLOC_ARENA_MAX=2",
                 "OMP_NUM_THREADS=1",
+                "CUDA_LAUNCH_BLOCKING=1",
+                "TORCH_USE_CUDA_DSA=1",
+
             ],
             "ipc": 'host',
             "networks": ["fl-network"]
@@ -55,6 +58,8 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
                 "MALLOC_ARENA_MAX=2",
                 "OMP_NUM_THREADS=1",
+                "CUDA_LAUNCH_BLOCKING=1",
+                "TORCH_USE_CUDA_DSA=1",
                 f"GPU_FRACTION={mem_fraction}",
                 f"CLIENT_ID={c}"
             ],
