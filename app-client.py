@@ -70,7 +70,6 @@ def main():
     # 2. Data args
     parser.add_argument("--data_path", type=str, default='dataset/pecanstreet/15min/austin/train/')
     parser.add_argument("--test_path", type=str, default='dataset/pecanstreet/15min/austin/test/')
-    parser.add_argument("--test_size", type=float, default=0.2)
     parser.add_argument("--loc", type=str, default="austin", help="[austin, california, newyork, puertorico]")
     parser.add_argument("--targets", type=list, default=['consumption'])
     parser.add_argument("--num_lags", type=int, default=96)

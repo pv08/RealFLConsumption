@@ -5,9 +5,6 @@ import numpy as np
 import torch as T
 import torch.nn as nn
 import math
-import gc
-
-from pygments.lexers.c_like import ValaLexer
 from pymongo import MongoClient
 from torch.utils.data import DataLoader
 from typing import List, Optional, Union, Any, Dict
@@ -48,10 +45,10 @@ class ClientLearning:
 
     def _load_data(self):
         log(INFO, f"Retrieving {self.cid}'s data from {self.args.mongo_uri}")
-        train_dataset = MongoDBDataset(_id=self.cid, _type="train", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
-        val_dataset = MongoDBDataset(_id=self.cid, _type="val", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
-        self.train_loader = DataLoader(train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
-        self.val_loader = DataLoader(val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
+        self.train_dataset = MongoDBDataset(_id=self.cid, _type="train", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
+        self.val_dataset = MongoDBDataset(_id=self.cid, _type="val", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
+        self.train_loader = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
+        self.val_loader = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
 
 
     def set_parameters(self, params: Union[List[np.ndarray], nn.Module]):
@@ -104,7 +101,7 @@ class ClientLearning:
         self.set_parameters(params)
 
         test_dataset = MongoDBDataset(_id=self.cid, _type="test", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
-        test_loader = DataLoader(test_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
+        test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=self.args.num_workers)
 
         test_mse, test_rmse, test_mae, test_mape, test_r2, test_nrmse, pinball, _, y_pred_test = self.test(self.model, test_loader,
                                                                                                     None,
@@ -166,7 +163,6 @@ class ClientLearning:
 
         optimizer = self.get_optim(model=model, optim_name=optimizer, lr=lr)
         criterion = self.get_criterion(crit_name=criterion)
-
         for epoch in range(epochs):
             model.to(device)
             model.train()
