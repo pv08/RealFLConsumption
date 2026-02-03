@@ -15,8 +15,8 @@ class MongoDBDataset(Dataset):
         self.collection_name = f"{loc}-samples"
 
         self.client = MongoClient(self.mongo_uri)
-        col = self.client[self.db_name][self.collection_name]
-        self.doc_ids = list(col.find(
+        self.col = self.client[self.db_name][self.collection_name]
+        self.doc_ids = list(self.col.find(
             {"client_id": self._id, "type": _type},
             {"_id": 1},
         ))
@@ -25,9 +25,8 @@ class MongoDBDataset(Dataset):
         return len(self.doc_ids)
 
     def __getitem__(self, idx):
-        col = self.client[self.db_name][self.collection_name]
         _id = self.doc_ids[idx]["_id"]
-        _data = col.find_one({"_id": _id})
+        _data = self.col.find_one({"_id": _id})
 
         X = pickle.loads(_data["X"])
         y = pickle.loads(_data["y"])
