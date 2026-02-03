@@ -29,7 +29,7 @@ def main():
             data_col.insert_many(documents)
 
     parser = ArgumentParser()
-    parser.add_argument("--mongo_uri", type=str, default='mongodb://192.168.1.28:27017')
+    parser.add_argument("--mongo_uri", type=str, default='mongodb://localhost:27017')
     parser.add_argument("--model_name", type=str, default='lstm')
     parser.add_argument("--loc", type=str, default='austin')
     parser.add_argument("--data_path", type=str, default='dataset/pecanstreet/15min/austin/train/')
