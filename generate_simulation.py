@@ -8,6 +8,20 @@ from src.utils.logger import log
 def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], clients_per_round: int, max_rounds: int, mem_fraction: float, epochs: int, batch_size: int):
     host, port = host_port
     services = {
+        "mongodb": {
+            "image": "mongo",
+            "container_name": "fl_mongo",
+            "ports": ["27017:27017"],
+            "volumes": ["./mongo_data:/data/db"],
+            "networks": ["fl-network"],
+            "deploy": {
+                "resources": {
+                    "limits": {
+                        "memory": "2G"
+                    }
+                }
+            }
+        },
         "fl-server": {
             "build": ".",
             "image": "fl-simulation-img",
@@ -24,14 +38,8 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
                     }
                 }
             },
+            "depends_on": ["mongodb"],
             "ports": [f"{port}:{port}"],
-            # "healthcheck": {
-            #     "test": ["CMD", "python", "-c", f"import socket; s = socket.socket(); s.connect(({host}, {port}))"],
-            #     "interval": "5s",
-            #     "timeout": "5s",
-            #     "retries": 5,
-            #     "start_period": "10s"
-            # },
             "environment": [
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
@@ -53,9 +61,10 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
                 "./etc:/app/etc",  # Onde os modelos e CSVs globais são salvos
             ],
             "depends_on": {
-                "fl-server": {"condition": "service_started"}
+                "fl-server": {"condition": "service_started"},
+                "mongodb": {"condition": "service_started"},
             },
-            "command": f"""python app-client.py --mongo_uri "mongodb://fl-server:27017/" --loc="{location}" --data_path "dataset/pecanstreet/15min/{location}/train/" --test_path "dataset/pecanstreet/15min/{location}/test/"  --host fl-server --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers 0""",
+            "command": f"""python app-client.py --mongo_uri "mongodb://mongodb:27017/" --loc="{location}" --data_path "dataset/pecanstreet/15min/{location}/train/" --test_path "dataset/pecanstreet/15min/{location}/test/"  --host fl-server --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers 0""",
             "environment": [
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "CUBLAS_WORKSPACE_CONFIG=:4096:8",
