@@ -43,8 +43,9 @@ class ClientLearning:
         self.train_loader = None
         self.val_loader = None
 
+        self._load_data()
 
-        self.model = get_model(device="cpu", model=self.args.model_name, input_dim=self.input_dim,
+        self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
                                out_dim=self.output_dim,
                                lags=self.args.num_lags)
 
@@ -79,8 +80,6 @@ class ClientLearning:
         _, train_loss, train_metrics = self.evaluate(self.train_loader)
         num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
         _train_instances = len(self.train_loader.dataset)
-        gc.collect()
-        T.cuda.empty_cache()
         return self.get_parameters(), train_loss_history, _train_instances, train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
 
 
@@ -106,8 +105,6 @@ class ClientLearning:
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         _instances = len(data.dataset)
-        gc.collect()
-        T.cuda.empty_cache()
         return _instances, loss, metrics
 
     def test_model(self, params):
@@ -157,7 +154,6 @@ class ClientLearning:
         y_true = T.stack(y_true)
         y_pred = T.stack(y_pred)
         mse, rmse, mae, mape, r2, nrmse, mean_pinball = self.accumulate_metrics(y_true.cpu(), y_pred.cpu())
-        model.to("cpu")
         if criterion is None:
             return mse, rmse, mae, mape, r2, nrmse, mean_pinball, y_true.cpu(), y_pred.cpu()
         return loss, mse, rmse, mae, mape, r2, nrmse, mean_pinball
@@ -228,7 +224,6 @@ class ClientLearning:
             log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}, Best Epoch: {best_epoch}")
         else:
             log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}")
-        model.to("cpu")
         return best_model, train_loss_history, val_loss_history
 
     def get_criterion(self, crit_name: str="mse"):
