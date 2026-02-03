@@ -17,15 +17,20 @@ class MongoDBDataset(Dataset):
         col = client[self.db_name][self.collection_name]
 
         # Pega todos os IDs do cliente
-        cursor = col.find({"client_id": str(_id), "type": _type}, {"_id": 1})
-        self.all_ids = [doc["_id"] for doc in cursor]
-        X_list = [pickle.loads(doc["X"]) for doc in cursor]
-        y_list = [pickle.loads(doc["y"]) for doc in cursor]
+        cursor = col.find(
+            {"client_id": str(_id), "type": _type},
+            {"X": 1, "y": 1, "_id": 0}
+        )
+        X_list = []
+        y_list = []
+        for doc in cursor:
+            X_list.append(pickle.loads(doc["X"]))
+            y_list.append(pickle.loads(doc["y"]))
         client.close()
 
         self.X = T.tensor(np.array(X_list)).float()
         self.y = T.tensor(np.array(y_list)).float()
-        
+
     def __len__(self):
         return len(self.all_ids)
 
