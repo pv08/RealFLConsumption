@@ -14,28 +14,25 @@ class MongoDBDataset(Dataset):
         self.db_name = "pecanstreet"
         self.collection_name = f"{loc}-samples"
 
-        client = MongoClient(self.mongo_uri)
-        col = client[self.db_name][self.collection_name]
+        self.client = MongoClient(self.mongo_uri)
+        col = self.client[self.db_name][self.collection_name]
         self.doc_ids = list(col.find(
             {"client_id": self._id, "type": _type},
             {"_id": 1},
         ))
 
-        client.close()
-
     def __len__(self):
         return len(self.doc_ids)
 
     def __getitem__(self, idx):
-        with MongoClient(self.mongo_uri) as client:
-            col = client[self.db_name][self.collection_name]
-            _id = self.doc_ids[idx]["_id"]
-            _data = col.find_one({"_id": _id})
+        col = self.client[self.db_name][self.collection_name]
+        _id = self.doc_ids[idx]["_id"]
+        _data = col.find_one({"_id": _id})
 
-            X = pickle.loads(_data["X"])
-            y = pickle.loads(_data["y"])
+        X = pickle.loads(_data["X"])
+        y = pickle.loads(_data["y"])
 
-            return T.tensor(X).float(), T.tensor(y).float()
+        return T.tensor(X).float(), T.tensor(y).float()
 
 
 

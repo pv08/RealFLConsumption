@@ -40,9 +40,6 @@ class ClientLearning:
             self.y_scaler = pickle.loads(_meta_doc["y_scaler"])
             client.close()
 
-        self.train_loader = None
-        self.val_loader = None
-
         self._load_data()
 
         self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
@@ -70,8 +67,6 @@ class ClientLearning:
 
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
         self.set_parameters(params)
-        if self.train_loader or self.val_loader is None:
-            self._load_data()
         self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
                                                             optimizer=optimizer, lr=lr, criterion=criterion,
                                                             early_stopping=early_stopping, patience=patience,
@@ -96,8 +91,6 @@ class ClientLearning:
         if model:
             self.set_parameters(model)
 
-        if self.train_loader or self.val_loader is None:
-            self._load_data()
         if data is None and method == 'test':
             data = self.val_loader
         if data is None and method == 'train':
