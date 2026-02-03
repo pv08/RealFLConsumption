@@ -32,8 +32,6 @@ class LSTM(torch.nn.Module):
         if init_weights:
             self.MLP_layers.apply(self._init_weights)
 
-        self.device = device
-        self.to(device)
     def forward(self, x):
         if not self.is_matrix:
             x = x.view([x.size(0), -1, x.size(1)])
