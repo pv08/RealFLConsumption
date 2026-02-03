@@ -804,4 +804,4 @@ services:
 networks:
   fl-network:
     driver: bridge
-    external: 'true'
+    external: true
