@@ -109,7 +109,7 @@ def main():
     }
     try:
         cids = localities[args.loc]
-        gpu_mem_fraction = .65 / len(cids) # 3% para cada cliente = 75% da GPU
+        gpu_mem_fraction = round(.65 / len(cids), 3) # 3% para cada cliente = 75% da GPU
     except:
         raise ValueError(f"Location not exist. Try austin, california, newyork or puertorico.")
 

@@ -46,7 +46,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=8156
     deploy:
       resources:
@@ -78,7 +78,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=2335
     deploy:
       resources:
@@ -110,7 +110,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=9922
     deploy:
       resources:
@@ -142,7 +142,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=3039
     deploy:
       resources:
@@ -174,7 +174,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=4031
     deploy:
       resources:
@@ -206,7 +206,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=8386
     deploy:
       resources:
@@ -238,7 +238,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=7951
     deploy:
       resources:
@@ -270,7 +270,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=3538
     deploy:
       resources:
@@ -302,7 +302,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=9160
     deploy:
       resources:
@@ -334,7 +334,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=5746
     deploy:
       resources:
@@ -366,7 +366,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=1642
     deploy:
       resources:
@@ -398,7 +398,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=6139
     deploy:
       resources:
@@ -430,7 +430,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=2361
     deploy:
       resources:
@@ -462,7 +462,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=3456
     deploy:
       resources:
@@ -494,7 +494,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=9019
     deploy:
       resources:
@@ -526,7 +526,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=661
     deploy:
       resources:
@@ -558,7 +558,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=2818
     deploy:
       resources:
@@ -590,7 +590,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=7800
     deploy:
       resources:
@@ -622,7 +622,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=7536
     deploy:
       resources:
@@ -654,7 +654,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=4767
     deploy:
       resources:
@@ -686,7 +686,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=8565
     deploy:
       resources:
@@ -718,7 +718,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=4373
     deploy:
       resources:
@@ -750,7 +750,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=7901
     deploy:
       resources:
@@ -782,7 +782,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=7719
     deploy:
       resources:
@@ -814,7 +814,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026000000000000002
+    - GPU_FRACTION=0.026
     - CLIENT_ID=9278
     deploy:
       resources:
