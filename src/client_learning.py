@@ -98,14 +98,14 @@ class ClientLearning:
 
         if model:
             self.set_parameters(model)
-        self.model.to(self.args.device)
+
         if self.train_loader or self.val_loader is None:
             self._load_data()
         if data is None and method == 'test':
             data = self.val_loader
         if data is None and method == 'train':
             data = self.train_loader
-
+        self.model.to(self.args.device)
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         _instances = len(data.dataset)
