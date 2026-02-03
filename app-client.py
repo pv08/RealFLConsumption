@@ -99,10 +99,6 @@ def main():
 
     args = parser.parse_args()
 
-    gpu_fraction = float(os.getenv("GPU_FRACTION", 0.1))
-    if T.cuda.is_available():
-        T.cuda.set_per_process_memory_fraction(gpu_fraction, 0)
-        log(INFO, f"Client using {args.device} in {gpu_fraction * 100}% of the GPU total")
 
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)
@@ -164,4 +160,9 @@ def main():
     except KeyboardInterrupt:
         log(WARNING, "Finishing Client...")
 if __name__ == "__main__":
+    gpu_fraction = float(os.getenv("GPU_FRACTION", 0.1))
+    if T.cuda.is_available():
+        T.cuda.set_per_process_memory_fraction(gpu_fraction, 0)
+        log(INFO, f"Client using {gpu_fraction * 100}% of the GPU total")
+
     main()
