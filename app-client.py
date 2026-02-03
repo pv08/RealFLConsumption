@@ -65,12 +65,13 @@ def main():
     # 1. Communication args
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
-    parser.add_argument('--mongo_uri', type=str, default="mongodb://localhost:27017/")
+    parser.add_argument('--mongo_uri', type=str, default="mongodb://192.168.1.28:27017/")
 
     # 2. Data args
     parser.add_argument("--data_path", type=str, default='dataset/pecanstreet/15min/austin/train/')
     parser.add_argument("--test_path", type=str, default='dataset/pecanstreet/15min/austin/test/')
     parser.add_argument("--test_size", type=float, default=0.2)
+    parser.add_argument("--loc", type=str, default="austin", help="[austin, california, newyork, puertorico]")
     parser.add_argument("--targets", type=list, default=['consumption'])
     parser.add_argument("--num_lags", type=int, default=96)
     parser.add_argument("--filter_bs", default=0)

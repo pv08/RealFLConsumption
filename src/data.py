@@ -6,18 +6,18 @@ from torch.utils.data import DataLoader, Dataset
 from typing import List, Optional
 
 class MongoDBDataset(Dataset):
-    def __init__(self, _id, _type, mongo_uri):
+    def __init__(self, _id, _type, mongo_uri, loc):
         self._id = _id
         self._type = _type
         self.mongo_uri = mongo_uri
 
         self.db_name = "pecanstreet"
-        self.collection_name = "samples"
+        self.collection_name = f"{loc}-samples"
 
         client = MongoClient(self.mongo_uri)
         col = client[self.db_name][self.collection_name]
         self.doc_ids = list(col.find(
-            {"client_id": int(self._id), "type": _type},
+            {"client_id": self._id, "type": _type},
             {"_id": 1},
         ))
 
