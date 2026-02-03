@@ -38,7 +38,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 8156 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 8156 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -70,7 +70,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 2335 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 2335 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -102,7 +102,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 9922 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 9922 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -134,7 +134,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 3039 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 3039 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -166,7 +166,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 4031 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 4031 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -198,7 +198,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 8386 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 8386 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -230,7 +230,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7951 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 7951 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -262,7 +262,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 3538 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 3538 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -294,7 +294,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 9160 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 9160 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -326,7 +326,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 5746 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 5746 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -358,7 +358,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 1642 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 1642 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -390,7 +390,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 6139 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 6139 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -422,7 +422,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 2361 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 2361 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -454,7 +454,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 3456 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 3456 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -486,7 +486,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 9019 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 9019 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -518,7 +518,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 661 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 661 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -550,7 +550,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 2818 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 2818 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -582,7 +582,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7800 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 7800 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -614,7 +614,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7536 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 7536 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -646,7 +646,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 4767 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 4767 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -678,7 +678,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 8565 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 8565 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -710,7 +710,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 4373 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 4373 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -742,7 +742,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7901 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 7901 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -774,7 +774,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7719 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 7719 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
@@ -806,7 +806,7 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 9278 --epochs 15 --batch_size 64 --num_workers 0
+      fl-server --filter_bs 9278 --epochs 15 --batch_size 16 --num_workers 0
     environment:
     - CUDA_LAUNCH_BLOCKING=1
     - NVIDIA_VISIBLE_DEVICES=all
