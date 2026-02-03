@@ -1,0 +1,7 @@
+mongo_data/
+# Ignorar git e caches (Deixa o build mais rápido)
+.git/
+__pycache__/
+*.pyc
+.env
+venv/
