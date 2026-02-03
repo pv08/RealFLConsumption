@@ -37,14 +37,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 8156 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 8156 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=8156
     deploy:
       resources:
@@ -68,14 +68,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 2335 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 2335 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=2335
     deploy:
       resources:
@@ -99,14 +99,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 9922 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 9922 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=9922
     deploy:
       resources:
@@ -130,14 +130,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 3039 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 3039 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=3039
     deploy:
       resources:
@@ -161,14 +161,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 4031 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 4031 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=4031
     deploy:
       resources:
@@ -192,14 +192,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 8386 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 8386 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=8386
     deploy:
       resources:
@@ -223,14 +223,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7951 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 7951 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=7951
     deploy:
       resources:
@@ -254,14 +254,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 3538 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 3538 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=3538
     deploy:
       resources:
@@ -285,14 +285,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 9160 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 9160 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=9160
     deploy:
       resources:
@@ -316,14 +316,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 5746 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 5746 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=5746
     deploy:
       resources:
@@ -347,14 +347,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 1642 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 1642 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=1642
     deploy:
       resources:
@@ -378,14 +378,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 6139 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 6139 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=6139
     deploy:
       resources:
@@ -409,14 +409,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 2361 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 2361 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=2361
     deploy:
       resources:
@@ -440,14 +440,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 3456 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 3456 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=3456
     deploy:
       resources:
@@ -471,14 +471,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 9019 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 9019 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=9019
     deploy:
       resources:
@@ -502,14 +502,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 661 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 661 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=661
     deploy:
       resources:
@@ -533,14 +533,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 2818 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 2818 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=2818
     deploy:
       resources:
@@ -564,14 +564,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7800 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 7800 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=7800
     deploy:
       resources:
@@ -595,14 +595,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7536 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 7536 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=7536
     deploy:
       resources:
@@ -626,14 +626,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 4767 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 4767 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=4767
     deploy:
       resources:
@@ -657,14 +657,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 8565 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 8565 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=8565
     deploy:
       resources:
@@ -688,14 +688,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 4373 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 4373 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=4373
     deploy:
       resources:
@@ -719,14 +719,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7901 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 7901 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=7901
     deploy:
       resources:
@@ -750,14 +750,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 7719 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 7719 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=7719
     deploy:
       resources:
@@ -781,14 +781,14 @@ services:
         condition: service_started
     command: python app-client.py --mongo_uri "mongodb://fl_mongo:27017/" --loc="austin"
       --data_path "dataset/pecanstreet/15min/austin/train/" --test_path "dataset/pecanstreet/15min/austin/test/"  --host
-      fl-server --filter_bs 9278 --epochs 15 --batch_size 128 --num_workers 0
+      fl-server --filter_bs 9278 --epochs 15 --batch_size 64 --num_workers 0
     environment:
     - NVIDIA_VISIBLE_DEVICES=all
     - CUBLAS_WORKSPACE_CONFIG=:4096:8
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.03
+    - GPU_FRACTION=0.026000000000000002
     - CLIENT_ID=9278
     deploy:
       resources:

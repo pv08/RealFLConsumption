@@ -44,11 +44,12 @@ class ClientLearning:
         self.val_loader = None
 
 
-        self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
+        self.model = get_model(device="cpu", model=self.args.model_name, input_dim=self.input_dim,
                                out_dim=self.output_dim,
                                lags=self.args.num_lags)
 
     def _load_data(self):
+        log(INFO, f"Retrieving {self.cid}'s data from {self.args.mongo_uri}")
         train_dataset = MongoDBDataset(_id=self.cid, _type="train", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
         val_dataset = MongoDBDataset(_id=self.cid, _type="val", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
         self.train_loader = DataLoader(train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
@@ -68,6 +69,7 @@ class ClientLearning:
 
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
         self.set_parameters(params)
+        self.model.to(self.args.device)
         if self.train_loader or self.val_loader is None:
             self._load_data()
         self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
@@ -78,6 +80,9 @@ class ClientLearning:
         _, train_loss, train_metrics = self.evaluate(self.train_loader)
         num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
         _train_instances = len(self.train_loader.dataset)
+        self.model.to("cpu")
+        gc.collect()
+        T.cuda.empty_cache()
         return self.get_parameters(), train_loss_history, _train_instances, train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
 
 
@@ -93,7 +98,7 @@ class ClientLearning:
 
         if model:
             self.set_parameters(model)
-
+        self.model.to(self.args.device)
         if self.train_loader or self.val_loader is None:
             self._load_data()
         if data is None and method == 'test':
@@ -104,6 +109,9 @@ class ClientLearning:
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         _instances = len(data.dataset)
+        self.model.to("cpu")
+        gc.collect()
+        T.cuda.empty_cache()
         return _instances, loss, metrics
 
     def test_model(self, params):
