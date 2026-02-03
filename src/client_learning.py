@@ -28,8 +28,8 @@ class ClientLearning:
 
         with MongoClient(args.mongo_uri) as client:
             _db = client["pecanstreet"]
-            _meta_col = _db["metadata"]
-            _meta_doc = _meta_col.find_one({"client_id": int(self.cid)})
+            _meta_col = _db[f"{self.args.loc}-metadata"]
+            _meta_doc = _meta_col.find_one({"client_id": self.cid})
 
             if not _meta_doc:
                 raise ValueError(f"{self.cid}'s metadata not found")
@@ -49,8 +49,8 @@ class ClientLearning:
                                lags=self.args.num_lags)
 
     def _load_data(self):
-        train_dataset = MongoDBDataset(_id=self.cid, _type="train", mongo_uri=self.args.mongo_uri)
-        val_dataset = MongoDBDataset(_id=self.cid, _type="val", mongo_uri=self.args.mongo_uri)
+        train_dataset = MongoDBDataset(_id=self.cid, _type="train", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
+        val_dataset = MongoDBDataset(_id=self.cid, _type="val", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
         self.train_loader = DataLoader(train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
         self.val_loader = DataLoader(val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
 
@@ -108,29 +108,24 @@ class ClientLearning:
 
     def test_model(self, params):
         self.set_parameters(params)
-        self.X_test, self.y_test, num_features = self.processing.make_test_processing(filter_data=self.cid,
-                                                                                      x_scaler=self.x_scaler,
-                                                                                      y_scaler=self.y_scaler)
 
-        test_loader = TimeSeriesLoader(X=self.X_test, y=self.y_test,
-                                       num_lags=self.args.num_lags,
-                                       num_features=num_features,
-                                       indices=[0], batch_size=self.args.batch_size, shuffle=False,
-                                       num_workers=self.args.num_workers).get_dataloader()
+        test_dataset = MongoDBDataset(_id=self.cid, _type="test", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
+        test_loader = DataLoader(test_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
 
         test_mse, test_rmse, test_mae, test_mape, test_r2, test_nrmse, pinball, _, y_pred_test = self.test(self.model, test_loader,
                                                                                                     None,
                                                                                                     device=self.args.device)
 
+        y_test = next(iter(test_loader))
         inverted_y_test, inverted_y_pred_test = inverse_transform_test(
-            self.y_test, y_pred_test, self.y_scaler, round_preds=False, dims=[0]
+            y_test, y_pred_test, self.y_scaler, round_preds=False, dims=[0]
         )
 
         inverted_test_mse, inverted_test_rmse, inverted_test_mae, inverted_test_mape, inverted_test_r2, inverted_test_nrmse, inverted_test_pinball, inverted_test_res_per_dim = self.accumulate_metrics(
             inverted_y_test, inverted_y_pred_test, log_per_output=True, return_all=True
             )
 
-        results = {'y_true': self.y_test.tolist(), 'y_pred': y_pred_test.tolist(), 'mse': test_mse, 'rmse': test_rmse, 'mae': test_mae, 'mape': test_mape, 'r2': test_r2, 'nrmse': test_nrmse,
+        results = {'y_true': y_test.tolist(), 'y_pred': y_pred_test.tolist(), 'mse': test_mse, 'rmse': test_rmse, 'mae': test_mae, 'mape': test_mape, 'r2': test_r2, 'nrmse': test_nrmse,
                    'pinball': pinball, 'client': self.cid}
         inverted_values = {'y_true': inverted_y_test.tolist(), 'y_pred': inverted_y_pred_test.tolist(), 'mse': inverted_test_mse, 'rmse': inverted_test_rmse, 'mae': inverted_test_mae, 'mape': inverted_test_mape,
                            'r2': inverted_test_r2, 'nrmse': inverted_test_nrmse, 'pinball': inverted_test_pinball,
