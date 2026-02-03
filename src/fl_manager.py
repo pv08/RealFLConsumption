@@ -71,7 +71,7 @@ class FLServerState:
 
     def register_client(self, client_id, message_obj):
         if client_id not in self.registered_clients:
-            log(INFO, f"Client {client_id} assigned using {message_obj['model_name'].upper()} architecture ")
+            log(INFO, f"Client {client_id} assigned using {message_obj['model_name'].upper()} architecture -> {list(self.registered_clients.keys())}")
             self.registered_clients[client_id]= message_obj
 
         if self.phase == "WAITING_CLIENTS" and len(self.registered_clients) >= self.required_clients:
