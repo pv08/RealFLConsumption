@@ -69,7 +69,6 @@ class ClientLearning:
 
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
         self.set_parameters(params)
-        self.model.to(self.args.device)
         if self.train_loader or self.val_loader is None:
             self._load_data()
         self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
@@ -80,7 +79,6 @@ class ClientLearning:
         _, train_loss, train_metrics = self.evaluate(self.train_loader)
         num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
         _train_instances = len(self.train_loader.dataset)
-        self.model.to("cpu")
         gc.collect()
         T.cuda.empty_cache()
         return self.get_parameters(), train_loss_history, _train_instances, train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
@@ -105,11 +103,9 @@ class ClientLearning:
             data = self.val_loader
         if data is None and method == 'train':
             data = self.train_loader
-        self.model.to(self.args.device)
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         _instances = len(data.dataset)
-        self.model.to("cpu")
         gc.collect()
         T.cuda.empty_cache()
         return _instances, loss, metrics
@@ -161,6 +157,7 @@ class ClientLearning:
         y_true = T.stack(y_true)
         y_pred = T.stack(y_pred)
         mse, rmse, mae, mape, r2, nrmse, mean_pinball = self.accumulate_metrics(y_true.cpu(), y_pred.cpu())
+        model.to("cpu")
         if criterion is None:
             return mse, rmse, mae, mape, r2, nrmse, mean_pinball, y_true.cpu(), y_pred.cpu()
         return loss, mse, rmse, mae, mape, r2, nrmse, mean_pinball
@@ -231,6 +228,7 @@ class ClientLearning:
             log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}, Best Epoch: {best_epoch}")
         else:
             log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}")
+        model.to("cpu")
         return best_model, train_loss_history, val_loss_history
 
     def get_criterion(self, crit_name: str="mse"):
