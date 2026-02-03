@@ -72,7 +72,7 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
     compose_data = {
         "services": services,
         "networks": {
-            "fl-network": {"driver": "bridge", "external": "true"}
+            "fl-network": {"driver": "bridge", "external": True}
         }
     }
 
