@@ -23,8 +23,7 @@ for CLIENT_ID in "${ID_LIST[@]}"; do
     echo "[$CURRENT/$TOTAL] Processing Cliente ID: $CLIENT_ID ..."
 
     # Chama o script Python worker passando o ID e a Localidade
-    # shellcheck disable=SC2093
-    exec python migrate_data_mongo.py --loc $TARGET_LOC --filter_bs "$CLIENT_ID" --data_path "dataset/pecanstreet/15min/${TARGET_LOC}/train/" --test_path "dataset/pecanstreet/15min/${TARGET_LOC}/test/"\
+    python migrate_data_mongo.py --loc $TARGET_LOC --filter_bs "$CLIENT_ID" --data_path "dataset/pecanstreet/15min/${TARGET_LOC}/train/" --test_path "dataset/pecanstreet/15min/${TARGET_LOC}/test/"\
 
 
     # Verifica se o python rodou com sucesso (Exit Code 0)
