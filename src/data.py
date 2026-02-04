@@ -37,65 +37,22 @@ class MongoDBDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
 
-class TimeSeriesLoader:
-    def __init__(self, X, y,  num_lags, num_features, indices, batch_size, shuffle, num_workers):
-        self.X = T.tensor(X).float()
-        self.y = T.tensor(y).float()
-        self.num_lags = num_lags
-        self.num_features = num_features
 
-        self.indices = indices
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.num_workers = num_workers
+class LocalFileDataset(Dataset):
+    def __init__(self, client_id, _type, data_path="dataset/pecanstreet/15min/austin/train/"):
+        # Caminhos para os arquivos pré-processados
+        self.X_path = f"{data_path}/{client_id}-{_type}-X.npy"
+        self.y_path = f"{data_path}/{client_id}-{_type}-y.npy"
 
-
-
-    def get_dataloader(self):
-        tensor_dataset = TimeSeriesDataset(self.X, self.y, self.num_lags, self.num_features,
-                                           self.indices)
-        return DataLoader(tensor_dataset, batch_size=self.batch_size, shuffle=self.shuffle, num_workers=self.num_workers, pin_memory=False)
-
-
-
-
-
-class TimeSeriesDataset(Dataset):
-    def __init__(self, X: np.ndarray, y: np.ndarray, num_lags: int=10, num_features: int=11,
-                 indices: List[int]=[0]):
-        assert X.size(0) == y.size(0), "Size mismatch between tensors"
-
-        self.X = X
-        self.y = y
-        self.num_lags = num_lags
-        self.num_features = num_features
-        self.indices = indices
+        # Mapeia o arquivo em memória (não carrega na RAM ainda)
+        self.X = np.load(self.X_path, mmap_mode='r')
+        self.y = np.load(self.y_path, mmap_mode='r')
 
     def __len__(self):
-        return self.X.size(0)
+        return self.X.shape[0]
 
     def __getitem__(self, idx):
-        # if idx == 0:
-        #     tmp_X = self.X[idx]
-        #     if len(self.X.shape) < 3:
-        #         tmp_X = tmp_X.view(self.num_lags, self.num_features, 1)
-        #     y_hist = []
-        #     for i, lag in enumerate(tmp_X):
-        #         if i == 0:
-        #             pad = T.zeros_like(lag[self.indices])
-        #             y_hist.append(pad.reshape(1, -1))
-        #         else:
-        #             y_hist.append((tmp_X[i - 1][self.indices].reshape(1, -1)))
-        #     y_hist = T.cat(y_hist)
-        # elif idx < self.num_lags + 1:
-        #     last_obs = self.X[idx - 1]
-        #     if len(self.X.shape) < 3:
-        #         last_obs = last_obs.view(self.num_lags, self.num_features, 1)
-        #     y_hist = []
-        #     for i, lag in enumerate(last_obs):
-        #         y_hist.append(last_obs[i][self.indices].reshape(1, -1))
-        #     y_hist = T.cat(y_hist)
-        # else:
-        #     y_hist = self.y[idx - self.num_lags - 1: idx - 1]
-        #
-        return self.X[idx], self.y[idx]
+        # O dado só é lido do disco para a RAM no momento do acesso
+        x_tensor = T.from_numpy(self.X[idx].copy()).float()
+        y_tensor = T.from_numpy(self.y[idx].copy()).float()
+        return x_tensor, y_tensor

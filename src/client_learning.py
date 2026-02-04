@@ -13,9 +13,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from collections import OrderedDict
 from src.utils.functions import inverse_transform_test, get_model
 from src.utils.logger import log
-from src.data import MongoDBDataset
+from src.data import MongoDBDataset, LocalFileDataset
 from src.utils.early_stopping import EarlyStopping
-from src.data import TimeSeriesLoader
 
 class ClientLearning:
     def __init__(self, args, cid, seed: int):
@@ -23,19 +22,12 @@ class ClientLearning:
         self.cid = cid
         self.seed_all(seed)
 
-        with MongoClient(args.mongo_uri) as client:
-            _db = client["pecanstreet"]
-            _meta_col = _db[f"{self.args.loc}-metadata"]
-            _meta_doc = _meta_col.find_one({"client_id": self.cid})
-
-            if not _meta_doc:
-                raise ValueError(f"{self.cid}'s metadata not found")
-
-            self.input_dim = _meta_doc["input_dim"]
-            self.output_dim = _meta_doc["output_dim"]
-            self.x_scaler = pickle.loads(_meta_doc["x_scaler"])
-            self.y_scaler = pickle.loads(_meta_doc["y_scaler"])
-            client.close()
+        with open(f"{self.args.data_path}/{self.args.filter_bs}_metadata.pkl", "rb") as f:
+            _meta_doc =  pickle.load(f)
+        self.input_dim = _meta_doc["input_dim"]
+        self.output_dim = _meta_doc["output_dim"]
+        self.x_scaler = pickle.loads(_meta_doc["x_scaler"])
+        self.y_scaler = pickle.loads(_meta_doc["y_scaler"])
 
         self._load_data()
 
@@ -45,8 +37,8 @@ class ClientLearning:
 
     def _load_data(self):
         log(INFO, f"Retrieving {self.cid}'s data from {self.args.mongo_uri}")
-        self.train_dataset = MongoDBDataset(_id=self.cid, _type="train", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
-        self.val_dataset = MongoDBDataset(_id=self.cid, _type="val", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
+        self.train_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="train", data_path=self.args.data_path)
+        self.val_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="val", data_path=self.args.data_path)
         self.train_loader = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
         self.val_loader = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
 
@@ -100,7 +92,7 @@ class ClientLearning:
     def test_model(self, params):
         self.set_parameters(params)
 
-        test_dataset = MongoDBDataset(_id=self.cid, _type="test", mongo_uri=self.args.mongo_uri, loc=self.args.loc)
+        test_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="test", data_path=self.args.test_path)
         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=self.args.num_workers)
 
         test_mse, test_rmse, test_mae, test_mape, test_r2, test_nrmse, pinball, _, y_pred_test = self.test(self.model, test_loader,
