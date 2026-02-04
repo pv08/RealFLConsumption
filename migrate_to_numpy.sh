@@ -3,7 +3,7 @@
 # Configura a localidade
 TARGET_LOC="austin"
 
-echo "[!] - Initiating migration from CSV to MongoDB"
+echo "[!] - Initiating migration from CSV to Numpy"
 echo "[!] - Target location: $TARGET_LOC"
 
 # Lista de IDs (Copiada do seu entrypoint)
