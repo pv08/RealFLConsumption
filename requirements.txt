@@ -5,6 +5,5 @@ pandas==2.3.3
 scikit-learn==1.6.1
 scipy==1.15.3
 sympy==1.14.0
-torch==2.9.1
 tqdm==4.67.1
 pymongo==4.16.0
