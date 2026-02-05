@@ -109,8 +109,15 @@ def main():
     try:
         while True:
             req = create_request("check_in", {"client_id":args.filter_bs,
-                                              "value": {"device": args.device, "model_name": args.model_name,
-                                                        "architecture": copy.deepcopy(trainer.model), "params": trainer.get_parameters()}})
+                                              "value": {
+                                                  "device": args.device,
+                                                  "model_name": args.model_name,
+                                                  "input_dim": trainer.input_dim,
+                                                  "output_dim": trainer.output_dim,
+                                                  "lags": args.num_lags
+                                              }
+                                              }
+                                 )
             log(INFO, f"Connecting to {args.host}:{args.port} and waiting selection...")
             resp = send_and_wait(args.host, args.port, req)
 

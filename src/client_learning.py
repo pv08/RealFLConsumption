@@ -50,7 +50,6 @@ class ClientLearning:
         gc.collect()
 
     def _load_data(self):
-        log(INFO, f"Retrieving {self.cid}'s data from {self.args.mongo_uri}")
         self.train_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="train", data_path=self.args.data_path)
         self.val_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="val", data_path=self.args.data_path)
         self.train_loader = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
