@@ -16,6 +16,9 @@ class RandomSelection(BaseSelectionStrategy):
             return available
         return random.sample(available, num_required)
 
+    def __repr__(self):
+        return "Random Selection"
+
 
 class RoundRobinSelection(BaseSelectionStrategy):
     def __init__(self):
@@ -33,3 +36,6 @@ class RoundRobinSelection(BaseSelectionStrategy):
             self.last_index += 1
 
         return list(set(selected))  # Remove duplicatas se num_required > total
+
+    def __repr__(self):
+        return "Robin Selection"

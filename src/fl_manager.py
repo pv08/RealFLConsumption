@@ -4,17 +4,19 @@ import torch as T
 import pickle
 from collections import defaultdict
 from logging import INFO, WARNING
-from typing import List, Dict
+from typing import List, Dict, Tuple
+from functools import reduce
 from collections import OrderedDict
 from src.utils.functions import mkdir_if_not_exists, get_model
 from src.utils.logger import log
 
 class FLServerState:
-    def __init__(self, strategy, required_clients=5, clients_per_round=2, max_rounds=10):
+    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10):
         self.global_model = None
         self.global_weights = None
         self.phase = "WAITING_CLIENTS" # WAITING_CLIENTS, INITIAL_EVAL, TRAINING, GLOBAL_EVAL
-        self.strategy = strategy
+        self.selection_strategy = selection_strategy
+        self.aggr_strategy = aggr_strategy
         self.required_clients = required_clients
         self.clients_per_round = clients_per_round
         self.max_rounds = max_rounds
@@ -32,6 +34,9 @@ class FLServerState:
 
         self.history = defaultdict(list)
         self.best_loss, self.best_round = np.inf, -1
+        log(INFO, f"Aggregation Algorithm: {repr(self.aggr_strategy)}")
+        log(INFO, f"Client Selection Mechanism: {repr(self.selection_strategy)}")
+
 
     @staticmethod
     def weighted_loss_avg(n_per_client: List[int], losses: List[float]) -> float:
@@ -221,7 +226,7 @@ class FLServerState:
         if len(self.updates_received) >= len(self.selected_clients):
             self._log_and_save_update_procedure()
             log(INFO, "All selected clients trained.")
-            weight_list = [v["params"] for k, v in self.updates_received.items()]
+            weight_list = [(v["params"], v["train_instances"]) for k, v in self.updates_received.items()]
             self.global_weights = self._aggregate_models(weight_list)
             self.updates_received = {}
             self.phase = "GLOBAL_EVAL"
@@ -243,7 +248,7 @@ class FLServerState:
     def _start_training_phase(self):
         """Sorteia os clientes que vão participar desta rodada de treino."""
         self.selected_clients = set(
-            self.strategy.select(self.registered_clients, self.clients_per_round)
+            self.selection_strategy.select(self.registered_clients, self.clients_per_round)
         )
         self.history["client_selection"].append({"round": self.current_round, "clients": list(self.selected_clients)})
         self.phase = "TRAINING"
@@ -271,15 +276,6 @@ class FLServerState:
                 # CHAMADA CRUCIAL: Envia os dados para o socket que estava esperando
                 msg.trigger_delayed_response({"action": task, "data": data})
 
-    def _aggregate_models(self, weights_list):
-        """
-        Média Simples (FedAvg). 
-        Na prática, converta dicts para Tensors, faça a média e salve.
-        """
-        log(INFO, "Aggregating models using (FedAvg)...")
-        """Média Simples (FedAvg) de listas de arrays NumPy."""
-        new_weights = []
-        for layer_idx in range(len(weights_list[0])):
-            layer_avg = np.mean([w[layer_idx] for w in weights_list], axis=0)
-            new_weights.append(layer_avg)
+    def _aggregate_models(self, weights_list: List[Tuple[List[np.ndarray], int]]):
+        new_weights = self.aggr_strategy.aggregate(weights_list, self.global_model)
         return new_weights

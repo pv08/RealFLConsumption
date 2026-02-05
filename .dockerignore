@@ -1,7 +1,18 @@
-mongo_data/
-# Ignorar git e caches (Deixa o build mais rápido)
-.git/
-__pycache__/
+# Ignora pastas de dados pesadas
+dataset/
+lock_dir/
+etc/
+outputs/
+
+# Ignora lixo do Python e Git
+.git
+__pycache__
 *.pyc
-.env
+*.pyo
+*.pyd
+.ipynb_checkpoints
+
+# Ignora logs e ambientes virtuais
+*.log
 venv/
+.env

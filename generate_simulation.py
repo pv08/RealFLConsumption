@@ -48,7 +48,8 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
             "container_name": f"fl_client_{c}",
             "volumes": [
                 "./etc:/app/etc",
-                "./lock_dir:/app/lock_dir"
+                "./lock_dir:/app/lock_dir",
+                "./dataset:/app/dataset:ro"
             ],
             "depends_on": {
                 "fl-server": {"condition": "service_started"},
