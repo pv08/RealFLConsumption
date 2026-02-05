@@ -5,11 +5,12 @@ import torch as T
 import time
 import copy
 from logging import INFO, WARNING, ERROR
-from src.models.rnn import RNN
 from src.comm import libclient
 from src.utils.logger import log
+from src.utils.gpu_lock import GPULock
 from argparse import ArgumentParser
 from src.client_learning import ClientLearning
+
 sel = selectors.DefaultSelector()
 
 
@@ -102,7 +103,7 @@ def main():
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)
     trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
-
+    gpu_queue = GPULock()
     log(INFO, f"Client {args.filter_bs} initiated -> {args}.")
 
     try:
@@ -134,7 +135,9 @@ def main():
             elif action == "evaluate":
                 log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")
                 global_model_params = data["weights"]
-                num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
+                with gpu_queue:
+                    num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
+                    trainer.clean_up()
 
                 req_m = create_request("send_metrics", {"client_id": args.filter_bs, "value": {"instances": num_test_instances, "loss": test_loss,
                                                                                                  "metrics": test_eval_metrics}})
@@ -142,13 +145,13 @@ def main():
 
             elif action == "train":
                 log(INFO, f"Starting training...")
-                # 1. Recebe os pesos do servidor e coloca em um temp_model
-                global_model_params = data["weights"]
 
-                res = trainer.fit(params=global_model_params, criterion=args.criterion,
+                global_model_params = data["weights"]
+                with gpu_queue:
+                    res = trainer.fit(params=global_model_params, criterion=args.criterion,
                                   optimizer=args.optimizer, early_stopping=args.early_stopping,
                                   patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
-
+                    trainer.clean_up()
                 # B. Envia Update
                 req_u = create_request("send_update", {"client_id": args.filter_bs, "value": res})
                 ack = send_and_wait(args.host, args.port, req_u)
@@ -159,9 +162,4 @@ def main():
     except KeyboardInterrupt:
         log(WARNING, "Finishing Client...")
 if __name__ == "__main__":
-    # gpu_fraction = float(os.getenv("GPU_FRACTION", 0.1))
-    # if T.cuda.is_available():
-    #     T.cuda.set_per_process_memory_fraction(gpu_fraction, 0)
-    #     log(INFO, f"Client using {gpu_fraction * 100}% of the GPU total")
-
     main()
