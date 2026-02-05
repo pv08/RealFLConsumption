@@ -11,7 +11,7 @@ from typing import List, Optional, Union, Any, Dict
 from logging import INFO, DEBUG
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score, mean_pinball_loss
 from collections import OrderedDict
-from src.utils.functions import inverse_transform_test, get_model
+from src.utils.functions import inverse_transform_test
 from src.utils.logger import log
 from src.data import MongoDBDataset, LocalFileDataset
 from src.utils.early_stopping import EarlyStopping
@@ -34,6 +34,7 @@ class ClientLearning:
         self.model = None
 
     def prepare_model(self, params=None):
+        from src.utils.functions import get_model
         self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
                                out_dim=self.output_dim,
                                lags=self.args.num_lags)
@@ -78,6 +79,8 @@ class ClientLearning:
         _, train_loss, train_metrics = self.evaluate(train_loader)
         num_val, val_loss, val_metrics = self.evaluate(val_loader)
         _train_instances = len(self.train_dataset)
+        del train_loader
+        del val_loader
         return self.get_parameters(), train_loss_history, _train_instances, train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
 
 
@@ -103,6 +106,7 @@ class ClientLearning:
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         _instances = len(data.dataset)
+        del data
         return _instances, loss, metrics
 
     def test_model(self, params):
@@ -152,6 +156,8 @@ class ClientLearning:
         y_true = T.stack(y_true)
         y_pred = T.stack(y_pred)
         mse, rmse, mae, mape, r2, nrmse, mean_pinball = self.accumulate_metrics(y_true.cpu(), y_pred.cpu())
+        del model
+        del data
         if criterion is None:
             return mse, rmse, mae, mape, r2, nrmse, mean_pinball, y_true.cpu(), y_pred.cpu()
         return loss, mse, rmse, mae, mape, r2, nrmse, mean_pinball
@@ -185,6 +191,8 @@ class ClientLearning:
 
                 optimizer.step()
                 epochs_loss.append(loss.item())
+                # Avaliar perda para ver esse del
+                del loss, y_pred
 
             train_loss = sum(epochs_loss) / len(epochs_loss)
             _, train_mse, train_rmse, train_mae, train_mape, train_r2, train_nrmse, mean_pinball = self.test(model, train_loader,
@@ -221,6 +229,10 @@ class ClientLearning:
             log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}, Best Epoch: {best_epoch}")
         else:
             log(INFO, f"Participant: {self.cid} | Best loss: {best_loss}")
+
+        del optimizer
+        del criterion
+        gc.collect()
         return best_model, train_loss_history, val_loss_history
 
     def get_criterion(self, crit_name: str="mse"):
