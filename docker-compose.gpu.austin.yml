@@ -35,6 +35,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -67,6 +68,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -99,6 +101,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -131,6 +134,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -163,6 +167,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -195,6 +200,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -227,6 +233,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -259,6 +266,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -291,6 +299,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -323,6 +332,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -355,6 +365,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -387,6 +398,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -419,6 +431,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -451,6 +464,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -483,6 +497,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -515,6 +530,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -547,6 +563,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -579,6 +596,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -611,6 +629,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -643,6 +662,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -675,6 +695,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -707,6 +728,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -739,6 +761,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -771,6 +794,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
@@ -803,6 +827,7 @@ services:
     volumes:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
+    - ./dataset:/app/dataset:ro
     depends_on:
       fl-server:
         condition: service_started
