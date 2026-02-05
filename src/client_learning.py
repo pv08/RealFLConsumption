@@ -110,7 +110,7 @@ class ClientLearning:
         return _instances, loss, metrics
 
     def test_model(self, params):
-        self.set_parameters(params)
+        self.prepare_model(params)
 
         test_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="test", data_path=self.args.test_path)
         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=self.args.num_workers)
