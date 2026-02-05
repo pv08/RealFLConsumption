@@ -160,7 +160,9 @@ def main():
                                   patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
                     end_time = time.time()
                     training_time = end_time - start_time
+                    log(INFO,f"Time spent to train client {args.filter_bs} {training_time} seconds --> {(training_time) / 3600} hours")
                     res += (training_time, )
+
                     trainer.clean_up()
                 # B. Envia Update
                 req_u = create_request("send_update", {"client_id": args.filter_bs, "value": res})

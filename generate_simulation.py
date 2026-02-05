@@ -101,7 +101,7 @@ def main():
     parser.add_argument('--clients_per_round', type=int, default=5)
     parser.add_argument('--max_rounds', type=int, default=3)
     parser.add_argument('--epochs', type=int, default=15)
-    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--batch_size', type=int, default=512)
 
     args = parser.parse_args()
 
