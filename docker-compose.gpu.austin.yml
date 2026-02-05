@@ -5,6 +5,7 @@ services:
     container_name: fl_server
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     command: python app-server.py --host 0.0.0.0 --required_clients 25 --clients_per_round
       5 --max_rounds 3
     runtime: nvidia
@@ -24,7 +25,7 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_8156:
@@ -33,6 +34,7 @@ services:
     container_name: fl_client_8156
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -46,7 +48,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=8156
     deploy:
       resources:
@@ -56,7 +57,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_2335:
@@ -65,6 +66,7 @@ services:
     container_name: fl_client_2335
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -78,7 +80,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=2335
     deploy:
       resources:
@@ -88,7 +89,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_9922:
@@ -97,6 +98,7 @@ services:
     container_name: fl_client_9922
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -110,7 +112,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=9922
     deploy:
       resources:
@@ -120,7 +121,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_3039:
@@ -129,6 +130,7 @@ services:
     container_name: fl_client_3039
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -142,7 +144,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=3039
     deploy:
       resources:
@@ -152,7 +153,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_4031:
@@ -161,6 +162,7 @@ services:
     container_name: fl_client_4031
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -174,7 +176,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=4031
     deploy:
       resources:
@@ -184,7 +185,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_8386:
@@ -193,6 +194,7 @@ services:
     container_name: fl_client_8386
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -206,7 +208,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=8386
     deploy:
       resources:
@@ -216,7 +217,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_7951:
@@ -225,6 +226,7 @@ services:
     container_name: fl_client_7951
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -238,7 +240,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=7951
     deploy:
       resources:
@@ -248,7 +249,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_3538:
@@ -257,6 +258,7 @@ services:
     container_name: fl_client_3538
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -270,7 +272,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=3538
     deploy:
       resources:
@@ -280,7 +281,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_9160:
@@ -289,6 +290,7 @@ services:
     container_name: fl_client_9160
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -302,7 +304,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=9160
     deploy:
       resources:
@@ -312,7 +313,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_5746:
@@ -321,6 +322,7 @@ services:
     container_name: fl_client_5746
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -334,7 +336,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=5746
     deploy:
       resources:
@@ -344,7 +345,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_1642:
@@ -353,6 +354,7 @@ services:
     container_name: fl_client_1642
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -366,7 +368,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=1642
     deploy:
       resources:
@@ -376,7 +377,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_6139:
@@ -385,6 +386,7 @@ services:
     container_name: fl_client_6139
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -398,7 +400,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=6139
     deploy:
       resources:
@@ -408,7 +409,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_2361:
@@ -417,6 +418,7 @@ services:
     container_name: fl_client_2361
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -430,7 +432,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=2361
     deploy:
       resources:
@@ -440,7 +441,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_3456:
@@ -449,6 +450,7 @@ services:
     container_name: fl_client_3456
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -462,7 +464,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=3456
     deploy:
       resources:
@@ -472,7 +473,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_9019:
@@ -481,6 +482,7 @@ services:
     container_name: fl_client_9019
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -494,7 +496,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=9019
     deploy:
       resources:
@@ -504,7 +505,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_661:
@@ -513,6 +514,7 @@ services:
     container_name: fl_client_661
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -526,7 +528,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=661
     deploy:
       resources:
@@ -536,7 +537,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_2818:
@@ -545,6 +546,7 @@ services:
     container_name: fl_client_2818
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -558,7 +560,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=2818
     deploy:
       resources:
@@ -568,7 +569,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_7800:
@@ -577,6 +578,7 @@ services:
     container_name: fl_client_7800
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -590,7 +592,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=7800
     deploy:
       resources:
@@ -600,7 +601,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_7536:
@@ -609,6 +610,7 @@ services:
     container_name: fl_client_7536
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -622,7 +624,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=7536
     deploy:
       resources:
@@ -632,7 +633,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_4767:
@@ -641,6 +642,7 @@ services:
     container_name: fl_client_4767
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -654,7 +656,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=4767
     deploy:
       resources:
@@ -664,7 +665,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_8565:
@@ -673,6 +674,7 @@ services:
     container_name: fl_client_8565
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -686,7 +688,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=8565
     deploy:
       resources:
@@ -696,7 +697,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_4373:
@@ -705,6 +706,7 @@ services:
     container_name: fl_client_4373
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -718,7 +720,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=4373
     deploy:
       resources:
@@ -728,7 +729,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_7901:
@@ -737,6 +738,7 @@ services:
     container_name: fl_client_7901
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -750,7 +752,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=7901
     deploy:
       resources:
@@ -760,7 +761,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_7719:
@@ -769,6 +770,7 @@ services:
     container_name: fl_client_7719
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -782,7 +784,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=7719
     deploy:
       resources:
@@ -792,7 +793,7 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
   client_9278:
@@ -801,6 +802,7 @@ services:
     container_name: fl_client_9278
     volumes:
     - ./etc:/app/etc
+    - ./lock_dir:/app/lock_dir
     depends_on:
       fl-server:
         condition: service_started
@@ -814,7 +816,6 @@ services:
     - PYTORCH_ALLOC_CONF=expandable_segments:True
     - MALLOC_ARENA_MAX=2
     - OMP_NUM_THREADS=1
-    - GPU_FRACTION=0.026
     - CLIENT_ID=9278
     deploy:
       resources:
@@ -824,10 +825,9 @@ services:
             count: 1
             capabilities:
             - gpu
-    ipc: host
+    shm_size: 1gb
     networks:
     - fl-network
 networks:
   fl-network:
     driver: bridge
-    external: true
