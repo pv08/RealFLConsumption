@@ -5,7 +5,7 @@ import numpy as np
 import torch as T
 import torch.nn as nn
 import math
-import fcntl
+import gc
 from torch.utils.data import DataLoader
 from typing import List, Optional, Union, Any, Dict
 from logging import INFO, DEBUG
@@ -31,9 +31,23 @@ class ClientLearning:
 
         self._load_data()
 
+        self.model = None
+
+    def prepare_model(self, params=None):
         self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
                                out_dim=self.output_dim,
                                lags=self.args.num_lags)
+        if params:
+            self.set_parameters(params)
+
+    def clean_up(self):
+        """Limpa o modelo da VRAM."""
+        if self.model is not None:
+            del self.model
+            self.model = None
+        if T.cuda.is_available():
+            T.cuda.empty_cache()
+        gc.collect()
 
     def _load_data(self):
         log(INFO, f"Retrieving {self.cid}'s data from {self.args.mongo_uri}")
@@ -55,24 +69,15 @@ class ClientLearning:
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
 
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
-        self.set_parameters(params)
+        self.prepare_model(params)
         log(DEBUG, f"Client {self.cid} waiting GPU gueue")
-        with open("/app/lock_dir/gpu.lock", 'w') as lock_f:
-            fcntl.flock(lock_f, fcntl.LOCK_EX)  # Bloqueio Exclusivo
-            log(DEBUG, f"Client {self.cid} on the GPU. Initiating training on the GPU")
-            try:
+        self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
+                                                            optimizer=optimizer, lr=lr, criterion=criterion,
+                                                            early_stopping=early_stopping, patience=patience,
+                                                            device=device)
 
-                self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
-                                                                    optimizer=optimizer, lr=lr, criterion=criterion,
-                                                                    early_stopping=early_stopping, patience=patience,
-                                                                    device=device)
-
-                _, train_loss, train_metrics = self.evaluate(self.train_loader)
-                num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
-            except Exception as e:
-                raise e
-            finally:
-                fcntl.flock(lock_f, fcntl.LOCK_UN)
+        _, train_loss, train_metrics = self.evaluate(self.train_loader)
+        num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
         _train_instances = len(self.train_loader.dataset)
         return self.get_parameters(), train_loss_history, _train_instances, train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
 
@@ -89,24 +94,15 @@ class ClientLearning:
             params['criterion'] = nn.MSELoss()
 
         if model:
-            self.set_parameters(model)
+            self.prepare_model(model)
 
         if data is None and method == 'test':
             data = self.val_loader
         if data is None and method == 'train':
             data = self.train_loader
 
-        log(DEBUG, f"Client {self.cid} waiting GPU gueue")
-        with open("/app/lock_dir/gpu.lock", 'w') as lock_f:
-            fcntl.flock(lock_f, fcntl.LOCK_EX)  # Bloqueio Exclusivo
-            log(DEBUG, f"Client {self.cid} on the GPU. Initiating evaluation on the GPU")
-            try:
-                loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
-                metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
-            except Exception as e:
-                raise Exception
-            finally:
-                fcntl.flock(lock_f, fcntl.LOCK_UN)
+        loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
+        metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         _instances = len(data.dataset)
         return _instances, loss, metrics
 
