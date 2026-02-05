@@ -215,11 +215,11 @@ class FLServerState:
 
     def receive_update(self, client_id, client_res):
         """Recebe pesos treinados e verifica agregação."""
-        model_params, train_history, num_train, train_loss, train_metrics, val_history, num_val, val_loss, val_metrics = client_res
+        model_params, train_history, num_train, train_loss, train_metrics, val_history, num_val, val_loss, val_metrics, time_spent = client_res
         if client_id not in self.updates_received:
             self.updates_received[client_id] = {"params": model_params, "train_history": train_history, "train_instances": num_train, "train_loss": train_loss,
                                                 "train_metrics": train_metrics, "val_history":val_history, "val_instances": num_val,
-                                                "val_loss": val_loss, "val_metrics": val_metrics}
+                                                "val_loss": val_loss, "val_metrics": val_metrics, "time_spent": time_spent}
             log(INFO, f"Update received from client {client_id}")
 
         # Se todos treinaram, agrega e vai para avaliação global
