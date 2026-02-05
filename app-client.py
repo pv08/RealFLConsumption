@@ -151,13 +151,16 @@ def main():
                 send_and_wait(host, port, req_m)
 
             elif action == "train":
+                start_time = time.time()
                 log(INFO, f"Starting training...")
-
                 global_model_params = data["weights"]
                 with gpu_queue:
                     res = trainer.fit(params=global_model_params, criterion=args.criterion,
                                   optimizer=args.optimizer, early_stopping=args.early_stopping,
                                   patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
+                    end_time = time.time()
+                    training_time = end_time - start_time
+                    res += (training_time, )
                     trainer.clean_up()
                 # B. Envia Update
                 req_u = create_request("send_update", {"client_id": args.filter_bs, "value": res})
