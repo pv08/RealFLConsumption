@@ -5,10 +5,10 @@ import numpy as np
 import torch as T
 import torch.nn as nn
 import math
-from pymongo import MongoClient
+import fcntl
 from torch.utils.data import DataLoader
 from typing import List, Optional, Union, Any, Dict
-from logging import INFO
+from logging import INFO, DEBUG
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score, mean_pinball_loss
 from collections import OrderedDict
 from src.utils.functions import inverse_transform_test, get_model
@@ -56,15 +56,26 @@ class ClientLearning:
 
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
         self.set_parameters(params)
-        self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
-                                                            optimizer=optimizer, lr=lr, criterion=criterion,
-                                                            early_stopping=early_stopping, patience=patience,
-                                                            device=device)
+        log(DEBUG, f"Client {self.cid} waiting GPU gueue")
+        with open("/app/lock_dir/gpu.lock", 'w') as lock_f:
+            fcntl.flock(lock_f, fcntl.LOCK_EX)  # Bloqueio Exclusivo
+            log(DEBUG, f"Client {self.cid} on the GPU. Initiating training on the GPU")
+            try:
 
-        _, train_loss, train_metrics = self.evaluate(self.train_loader)
-        num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
+                self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
+                                                                    optimizer=optimizer, lr=lr, criterion=criterion,
+                                                                    early_stopping=early_stopping, patience=patience,
+                                                                    device=device)
+
+                _, train_loss, train_metrics = self.evaluate(self.train_loader)
+                num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
+            except Exception as e:
+                raise e
+            finally:
+                fcntl.flock(lock_f, fcntl.LOCK_UN)
         _train_instances = len(self.train_loader.dataset)
         return self.get_parameters(), train_loss_history, _train_instances, train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
+
 
 
     def evaluate(self, data: Optional[Union[np.ndarray, DataLoader]]=None,
@@ -84,8 +95,18 @@ class ClientLearning:
             data = self.val_loader
         if data is None and method == 'train':
             data = self.train_loader
-        loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
-        metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
+
+        log(DEBUG, f"Client {self.cid} waiting GPU gueue")
+        with open("/app/lock_dir/gpu.lock", 'w') as lock_f:
+            fcntl.flock(lock_f, fcntl.LOCK_EX)  # Bloqueio Exclusivo
+            log(DEBUG, f"Client {self.cid} on the GPU. Initiating evaluation on the GPU")
+            try:
+                loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
+                metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
+            except Exception as e:
+                raise Exception
+            finally:
+                fcntl.flock(lock_f, fcntl.LOCK_UN)
         _instances = len(data.dataset)
         return _instances, loss, metrics
 

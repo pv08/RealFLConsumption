@@ -3,17 +3,19 @@ from argparse import ArgumentParser
 from logging import INFO
 from typing import List, Tuple
 from src.utils.logger import log
-
+from src.utils.functions import mkdir_if_not_exists
 
 def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], clients_per_round: int, max_rounds: int, mem_fraction: float, epochs: int, batch_size: int):
     host, port = host_port
+    mkdir_if_not_exists("lock_dir")
     services = {
         "fl-server": {
             "build": ".",
             "image": "fl-simulation-img",
             "container_name": "fl_server",
             "volumes": [
-                "./etc:/app/etc",  # Onde os modelos e CSVs globais são salvos
+                "./etc:/app/etc",
+                "./lock_dir:/app/lock_dir"
             ],
             "command": f"python app-server.py --host {host} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds}",
             "runtime": "nvidia",
@@ -33,7 +35,7 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
                 "OMP_NUM_THREADS=1",
 
             ],
-            "ipc": 'host',
+            "shm_size": '1gb',
             "networks": ["fl-network"]
         }
     }
@@ -45,7 +47,8 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
             "runtime": "nvidia",
             "container_name": f"fl_client_{c}",
             "volumes": [
-                "./etc:/app/etc",  # Onde os modelos e CSVs globais são salvos
+                "./etc:/app/etc",
+                "./lock_dir:/app/lock_dir"
             ],
             "depends_on": {
                 "fl-server": {"condition": "service_started"},
@@ -58,7 +61,7 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
                 "MALLOC_ARENA_MAX=2",
                 "OMP_NUM_THREADS=1",
-                f"GPU_FRACTION={mem_fraction}",
+                # f"GPU_FRACTION={mem_fraction}",
                 f"CLIENT_ID={c}"
             ],
             "deploy": {
@@ -68,14 +71,14 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
                     }
                 }
             },
-            "ipc": 'host',
+            "shm_size": '1gb',
             "networks": ["fl-network"]
         }
 
     compose_data = {
         "services": services,
         "networks": {
-            "fl-network": {"driver": "bridge", "external": True}
+            "fl-network": {"driver": "bridge"}
         }
     }
 
