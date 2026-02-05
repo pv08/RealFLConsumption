@@ -105,7 +105,6 @@ def main():
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)
     trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
-    gpu_queue = GPULock()
     log(INFO, f"Client {args.filter_bs} initiated -> {args}.")
 
     try:
@@ -144,7 +143,7 @@ def main():
             elif action == "evaluate":
                 log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")
                 global_model_params = data["weights"]
-                with gpu_queue:
+                with GPULock(client_id=args.filter_bs):
                     num_test_instances, test_loss, test_eval_metrics = ProcessExecutor.run_evaluate(
                         args=args,
                         params=global_model_params
@@ -158,7 +157,7 @@ def main():
                 start_time = time.time()
                 log(INFO, f"Starting training...")
                 global_model_params = data["weights"]
-                with gpu_queue:
+                with GPULock(client_id=args.filter_bs):
                     res = ProcessExecutor.run_train(
                         args=args,
                         params=global_model_params
