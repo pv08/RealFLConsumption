@@ -74,7 +74,7 @@ def main():
     parser.add_argument("--loc", type=str, default="austin", help="[austin, california, newyork, puertorico]")
     parser.add_argument("--targets", type=list, default=['consumption'])
     parser.add_argument("--num_lags", type=int, default=96)
-    parser.add_argument("--filter_bs", default=0)
+    parser.add_argument("--filter_bs", default=661)
     parser.add_argument("--identifier", type=str, default='cid')
     parser.add_argument("--nan_constant", type=int, default=0)
     parser.add_argument("--x_scaler", type=str, default='minmax')
@@ -103,7 +103,7 @@ def main():
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)
     trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
-    gpu_queue = GPULock()
+    # gpu_queue = GPULock()
     log(INFO, f"Client {args.filter_bs} initiated -> {args}.")
 
     try:
@@ -142,9 +142,8 @@ def main():
             elif action == "evaluate":
                 log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")
                 global_model_params = data["weights"]
-                with gpu_queue:
-                    num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
-                    trainer.clean_up()
+                num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
+                trainer.clean_up()
 
                 req_m = create_request("send_metrics", {"client_id": args.filter_bs, "value": {"instances": num_test_instances, "loss": test_loss,
                                                                                                  "metrics": test_eval_metrics}})
@@ -154,16 +153,15 @@ def main():
                 start_time = time.time()
                 log(INFO, f"Starting training...")
                 global_model_params = data["weights"]
-                with gpu_queue:
-                    res = trainer.fit(params=global_model_params, criterion=args.criterion,
-                                  optimizer=args.optimizer, early_stopping=args.early_stopping,
-                                  patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
-                    end_time = time.time()
-                    training_time = end_time - start_time
-                    log(INFO,f"Time spent to train client {args.filter_bs} {training_time} seconds --> {(training_time) / 3600} hours")
-                    res += (training_time, )
+                res = trainer.fit(params=global_model_params, criterion=args.criterion,
+                              optimizer=args.optimizer, early_stopping=args.early_stopping,
+                              patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
+                end_time = time.time()
+                training_time = end_time - start_time
+                log(INFO,f"Time spent to train client {args.filter_bs} {training_time} seconds --> {(training_time) / 3600} hours")
+                res += (training_time, )
 
-                    trainer.clean_up()
+                trainer.clean_up()
                 # B. Envia Update
                 req_u = create_request("send_update", {"client_id": args.filter_bs, "value": res})
                 ack = send_and_wait(args.host, args.port, req_u)
