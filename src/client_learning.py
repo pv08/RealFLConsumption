@@ -28,8 +28,8 @@ class ClientLearning:
         self.output_dim = _meta_doc["output_dim"]
         self.x_scaler = pickle.loads(_meta_doc["x_scaler"])
         self.y_scaler = pickle.loads(_meta_doc["y_scaler"])
-
-        self._load_data()
+        self.train_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="train", data_path=self.args.data_path)
+        self.val_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="val", data_path=self.args.data_path)
 
         self.model = None
 
@@ -50,10 +50,9 @@ class ClientLearning:
         gc.collect()
 
     def _load_data(self):
-        self.train_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="train", data_path=self.args.data_path)
-        self.val_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="val", data_path=self.args.data_path)
-        self.train_loader = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
-        self.val_loader = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
+        train_loader = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
+        val_loader = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
+        return train_loader, val_loader
 
 
     def set_parameters(self, params: Union[List[np.ndarray], nn.Module]):
@@ -70,14 +69,15 @@ class ClientLearning:
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
         self.prepare_model(params)
         log(DEBUG, f"Client {self.cid} waiting GPU gueue")
-        self.model, train_loss_history, val_loss_history = self.train(model=self.model, epochs=epochs,
+        train_loader, val_loader = self._load_data()
+        self.model, train_loss_history, val_loss_history = self.train(train_loader=train_loader, val_loader=val_loader, model=self.model, epochs=epochs,
                                                             optimizer=optimizer, lr=lr, criterion=criterion,
                                                             early_stopping=early_stopping, patience=patience,
                                                             device=device)
 
-        _, train_loss, train_metrics = self.evaluate(self.train_loader)
-        num_val, val_loss, val_metrics = self.evaluate(self.val_loader)
-        _train_instances = len(self.train_loader.dataset)
+        _, train_loss, train_metrics = self.evaluate(train_loader)
+        num_val, val_loss, val_metrics = self.evaluate(val_loader)
+        _train_instances = len(self.train_dataset)
         return self.get_parameters(), train_loss_history, _train_instances, train_loss, train_metrics, val_loss_history, num_val, val_loss, val_metrics
 
 
@@ -96,9 +96,9 @@ class ClientLearning:
             self.prepare_model(model)
 
         if data is None and method == 'test':
-            data = self.val_loader
+            data = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
         if data is None and method == 'train':
-            data = self.train_loader
+            data = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
 
         loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
@@ -157,7 +157,7 @@ class ClientLearning:
         return loss, mse, rmse, mae, mape, r2, nrmse, mean_pinball
 
 
-    def train(self, model: nn.Module, epochs: int=10, optimizer: str="adam",
+    def train(self, train_loader: DataLoader, val_loader: DataLoader, model: nn.Module, epochs: int=10, optimizer: str="adam",
               lr: float="1e-3", criterion: str="mse",
               early_stopping: bool=False, patience: int=50, device: str="cuda:0",
               log_per: int=1):
@@ -175,7 +175,7 @@ class ClientLearning:
             model.to(device)
             model.train()
             epochs_loss = []
-            for x, y in self.train_loader:
+            for x, y in train_loader:
                 x, y = x.to(device), y.to(device)
                 optimizer.zero_grad()
                 y_pred = model(x)
@@ -187,9 +187,9 @@ class ClientLearning:
                 epochs_loss.append(loss.item())
 
             train_loss = sum(epochs_loss) / len(epochs_loss)
-            _, train_mse, train_rmse, train_mae, train_mape, train_r2, train_nrmse, mean_pinball = self.test(model, self.train_loader,
+            _, train_mse, train_rmse, train_mae, train_mape, train_r2, train_nrmse, mean_pinball = self.test(model, train_loader,
                                                                               criterion, device)
-            val_loss, val_mse, val_rmse, val_mae, val_mape, val_r2, val_nrmse, mean_pinball = self.test(model, self.val_loader,
+            val_loss, val_mse, val_rmse, val_mae, val_mape, val_r2, val_nrmse, mean_pinball = self.test(model, val_loader,
                                                                                  criterion, device)
             log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{epochs} | [Train]: loss {train_loss:.6f}, MSE: {train_mse:.6f} | [Val]: loss {val_loss:.6f}, MSE: {val_mse:.6f}")
             train_loss_history.append(train_mse)
