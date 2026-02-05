@@ -8,8 +8,10 @@ from logging import INFO, WARNING, ERROR
 from src.comm import libclient
 from src.utils.logger import log
 from src.utils.gpu_lock import GPULock
+from src.utils.process_executor import ProcessExecutor
 from argparse import ArgumentParser
 from src.client_learning import ClientLearning
+
 
 sel = selectors.DefaultSelector()
 
@@ -143,8 +145,10 @@ def main():
                 log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")
                 global_model_params = data["weights"]
                 with gpu_queue:
-                    num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
-                    trainer.clean_up()
+                    num_test_instances, test_loss, test_eval_metrics = ProcessExecutor.run_evaluate(
+                        args=args,
+                        params=global_model_params
+                    )
 
                 req_m = create_request("send_metrics", {"client_id": args.filter_bs, "value": {"instances": num_test_instances, "loss": test_loss,
                                                                                                  "metrics": test_eval_metrics}})
@@ -155,9 +159,10 @@ def main():
                 log(INFO, f"Starting training...")
                 global_model_params = data["weights"]
                 with gpu_queue:
-                    res = trainer.fit(params=global_model_params, criterion=args.criterion,
-                                  optimizer=args.optimizer, early_stopping=args.early_stopping,
-                                  patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
+                    res = ProcessExecutor.run_train(
+                        args=args,
+                        params=global_model_params
+                    )
                     end_time = time.time()
                     training_time = end_time - start_time
                     log(INFO,f"Time spent to train client {args.filter_bs} {training_time} seconds --> {(training_time) / 3600} hours")
