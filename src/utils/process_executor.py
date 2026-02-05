@@ -21,7 +21,7 @@ def _train_wrapper(queue, args, params):
         queue.put({"status": "error", "message": str(e) + "\n" + traceback.format_exc()})
 
 
-def _evaluate_wrapper(queue, args, client_id, seed, params):
+def _evaluate_wrapper(queue, args, params):
     try:
         from src.client_learning import ClientLearning
         trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
