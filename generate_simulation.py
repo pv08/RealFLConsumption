@@ -5,7 +5,7 @@ from typing import List, Tuple
 from src.utils.logger import log
 from src.utils.functions import mkdir_if_not_exists
 
-def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int):
+def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int):
     host, port = host_port
     mkdir_if_not_exists("lock_dir")
     services = {
@@ -54,7 +54,7 @@ def _create_compose(location: str, cids: List[int], host_port: Tuple[str, int], 
             "depends_on": {
                 "fl-server": {"condition": "service_started"},
             },
-            "command": f"""python app-client.py --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers 0 --loc="{location}" --gpu_slots="{gpu_slots}" --data_path "dataset/pecanstreet/15min/{location}/train/" --test_path "dataset/pecanstreet/15min/{location}/test/"  --host fl-server""",
+            "command": f"""python app-client.py --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers {num_workers} --loc="{location}" --gpu_slots="{gpu_slots}" --data_path "dataset/pecanstreet/15min/{location}/train/" --test_path "dataset/pecanstreet/15min/{location}/test/"  --host fl-server""",
             "environment": [
                 "CUDA_LAUNCH_BLOCKING=1",
                 "NVIDIA_VISIBLE_DEVICES=all",
@@ -98,9 +98,10 @@ def main():
     parser.add_argument('--host', type=str, default="0.0.0.0")
     parser.add_argument('--port', type=int, default=65432)
     parser.add_argument('--clients_per_round', type=int, default=5)
-    parser.add_argument('--max_rounds', type=int, default=20)
+    parser.add_argument('--max_rounds', type=int, default=10)
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=1024)
+    parser.add_argument('--num_workers', type=int, default=2)
     parser.add_argument('--gpu_slots', type=int, default=1)
 
     args = parser.parse_args()
@@ -118,6 +119,6 @@ def main():
 
     _create_compose(location=args.loc, cids=cids, host_port=(args.host, args.port), clients_per_round=args.clients_per_round,
                     max_rounds=args.max_rounds, gpu_slots=args.gpu_slots, epochs=args.epochs,
-                    batch_size=args.batch_size)
+                    batch_size=args.batch_size, num_workers=args.num_workers)
 if __name__ == "__main__":
     main()
