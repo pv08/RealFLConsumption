@@ -6,6 +6,7 @@ import time
 import copy
 from logging import INFO, WARNING, ERROR
 from src.comm import libclient
+from src.utils.functions import make_default_dirs, mkdir_if_not_exists
 from src.utils.logger import log
 from src.utils.gpu_lock import GPULock
 from src.utils.process_executor import ProcessExecutor
@@ -100,7 +101,7 @@ def main():
     parser.add_argument("--device", type=str, default=T.device('cuda:0' if T.cuda.is_available() else 'cpu'))
 
     args = parser.parse_args()
-
+    mkdir_if_not_exists("/app/lock_dir")
 
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)
