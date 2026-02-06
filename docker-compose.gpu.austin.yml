@@ -7,7 +7,7 @@ services:
     - ./etc:/app/etc
     - ./lock_dir:/app/lock_dir
     command: python app-server.py --host 0.0.0.0 --required_clients 25 --clients_per_round
-      5 --max_rounds 20
+      5 --max_rounds 10
     runtime: nvidia
     deploy:
       resources:
