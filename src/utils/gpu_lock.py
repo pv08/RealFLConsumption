@@ -13,8 +13,8 @@ class GPULock:
         self.slots = slots
         self.lock_files = []
         for i in range(slots):
-            mkdir_if_not_exists(f"lock_dir/gpu_{i}.lock")
-            self.lock_files.append(f"lock_dir/gpu_{i}.lock")
+            mkdir_if_not_exists(f"/app/lock_dir/gpu_{i}.lock")
+            self.lock_files.append(f"/app/lock_dir/gpu_{i}.lock")
         self.active_handle = None
         self.active_slot = None
 
