@@ -8,13 +8,12 @@ from src.utils.logger import log
 
 
 class GPULock:
-    def __init__(self, client_id, slots: int=1):
+    def __init__(self, client_id, slots: int=1, lock_dir="/app/lock_dir"):
         self.client_id = client_id
         self.slots = slots
-        self.lock_files = []
-        for i in range(slots):
-            mkdir_if_not_exists(f"/app/lock_dir/gpu_{i}.lock")
-            self.lock_files.append(f"/app/lock_dir/gpu_{i}.lock")
+        self.lock_dir = lock_dir
+        os.makedirs(self.lock_dir, exist_ok=True)
+        self.lock_files = [os.path.join(self.lock_dir, f"gpu_{i}.lock") for i in range(slots)]
         self.active_handle = None
         self.active_slot = None
 
