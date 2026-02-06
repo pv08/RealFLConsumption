@@ -68,7 +68,6 @@ def main():
     # 1. Communication args
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
-    parser.add_argument('--mongo_uri', type=str, default="mongodb://192.168.1.28:27017/")
 
     # 2. Data args
     parser.add_argument("--data_path", type=str, default='dataset/pecanstreet/15min/austin/train/')
@@ -95,6 +94,7 @@ def main():
     parser.add_argument("--patience", type=int, default=50)
 
     # 4. Device args
+    parser.add_argument("--gpu_slots", type=int, default=1)
     parser.add_argument("--cuda", type=bool, default=T.cuda.is_available())
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--device", type=str, default=T.device('cuda:0' if T.cuda.is_available() else 'cpu'))
@@ -143,7 +143,7 @@ def main():
             elif action == "evaluate":
                 log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")
                 global_model_params = data["weights"]
-                with GPULock(client_id=args.filter_bs):
+                with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
                     num_test_instances, test_loss, test_eval_metrics = ProcessExecutor.run_evaluate(
                         args=args,
                         params=global_model_params
@@ -157,7 +157,7 @@ def main():
                 start_time = time.time()
                 log(INFO, f"Starting training...")
                 global_model_params = data["weights"]
-                with GPULock(client_id=args.filter_bs):
+                with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
                     res = ProcessExecutor.run_train(
                         args=args,
                         params=global_model_params
