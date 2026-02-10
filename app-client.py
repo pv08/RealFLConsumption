@@ -8,10 +8,12 @@ from logging import INFO, WARNING, ERROR
 
 from paths import TRAIN_DIR, TEST_DIR
 from src.comm import libclient
+from src.utils.functions import make_default_dirs, mkdir_if_not_exists
 from src.utils.logger import log
 # from src.utils.gpu_lock import GPULock
 from argparse import ArgumentParser
 from src.client_learning import ClientLearning
+
 
 sel = selectors.DefaultSelector()
 
@@ -68,7 +70,6 @@ def main():
     # 1. Communication args
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
-    parser.add_argument('--mongo_uri', type=str, default="mongodb://192.168.1.28:27017/")
 
     # 2. Data args
     parser.add_argument("--data_path", type=str, default=TRAIN_DIR)
@@ -95,12 +96,13 @@ def main():
     parser.add_argument("--patience", type=int, default=50)
 
     # 4. Device args
+    parser.add_argument("--gpu_slots", type=int, default=1)
     parser.add_argument("--cuda", type=bool, default=T.cuda.is_available())
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--device", type=str, default=T.device('cuda:0' if T.cuda.is_available() else 'cpu'))
 
     args = parser.parse_args()
-
+    mkdir_if_not_exists("/app/lock_dir")
 
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)

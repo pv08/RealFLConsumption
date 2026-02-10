@@ -110,7 +110,7 @@ class ClientLearning:
         return _instances, loss, metrics
 
     def test_model(self, params):
-        self.set_parameters(params)
+        self.prepare_model(params)
 
         test_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="test", data_path=self.args.test_path)
         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=self.args.num_workers)
@@ -119,7 +119,7 @@ class ClientLearning:
                                                                                                     None,
                                                                                                     device=self.args.device)
 
-        y_test = next(iter(test_loader))
+        y_test = test_dataset.y
         inverted_y_test, inverted_y_pred_test = inverse_transform_test(
             y_test, y_pred_test, self.y_scaler, round_preds=False, dims=[0]
         )

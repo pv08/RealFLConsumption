@@ -1,33 +1,39 @@
 import fcntl
 import os
 import time
-from logging import INFO
+from logging import INFO, WARNING
+
+from src.utils.functions import mkdir_if_not_exists
 from src.utils.logger import log
 
+
 class GPULock:
-    def __init__(self, lock_file="/app/lock_dir/gpu.lock"):
-        self.lock_file = lock_file
-        os.makedirs(os.path.dirname(self.lock_file), exist_ok=True)
-        self.handle = None
-
-    def acquire(self):
-        """Bloqueia a execução até que a GPU esteja disponível."""
-        log(INFO, "Waiting GPU become available (queue)...")
-        self.handle = open(self.lock_file, "w")
-        # LOCK_EX: Trava exclusiva. Se outro container tiver o lock, este para aqui.
-        fcntl.flock(self.handle, fcntl.LOCK_EX)
-        log(INFO, "GPU acquired! Initiating processing.")
-
-    def release(self):
-        """Libera a GPU para o próximo cliente da fila."""
-        if self.handle:
-            fcntl.flock(self.handle, fcntl.LOCK_UN)
-            self.handle.close()
-            log(INFO, "GPU free.")
+    def __init__(self, client_id, slots: int=1, lock_dir="/app/lock_dir"):
+        self.client_id = client_id
+        self.slots = slots
+        self.lock_dir = lock_dir
+        os.makedirs(self.lock_dir, exist_ok=True)
+        self.lock_files = [os.path.join(self.lock_dir, f"gpu_{i}.lock") for i in range(slots)]
+        self.active_handle = None
+        self.active_slot = None
 
     def __enter__(self):
-        self.acquire()
-        return self
+        while True:
+            for i in range(self.slots):
+                handle = open(self.lock_files[i], "w")
+                try:
+                    # Tenta o lock sem bloquear o processo inteiro (LOCK_NB)
+                    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    self.active_handle = handle
+                    self.active_slot = i
+                    return self
+                except BlockingIOError:
+                    handle.close()
+                    continue
+            time.sleep(1.0)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.release()
+        if self.active_handle:
+            fcntl.flock(self.active_handle, fcntl.LOCK_UN)
+            self.active_handle.close()
+            log(INFO, f"[Client {self.client_id}] released slot {self.active_slot}.")
