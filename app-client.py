@@ -5,9 +5,11 @@ import torch as T
 import time
 import copy
 from logging import INFO, WARNING, ERROR
+
+from paths import TRAIN_DIR, TEST_DIR
 from src.comm import libclient
 from src.utils.logger import log
-from src.utils.gpu_lock import GPULock
+# from src.utils.gpu_lock import GPULock
 from argparse import ArgumentParser
 from src.client_learning import ClientLearning
 
@@ -69,22 +71,22 @@ def main():
     parser.add_argument('--mongo_uri', type=str, default="mongodb://192.168.1.28:27017/")
 
     # 2. Data args
-    parser.add_argument("--data_path", type=str, default='dataset/pecanstreet/15min/austin/train/')
-    parser.add_argument("--test_path", type=str, default='dataset/pecanstreet/15min/austin/test/')
+    parser.add_argument("--data_path", type=str, default=TRAIN_DIR)
+    parser.add_argument("--test_path", type=str, default=TEST_DIR)
     parser.add_argument("--loc", type=str, default="austin", help="[austin, california, newyork, puertorico]")
     parser.add_argument("--targets", type=list, default=['consumption'])
     parser.add_argument("--num_lags", type=int, default=96)
     parser.add_argument("--filter_bs", default=661)
     parser.add_argument("--identifier", type=str, default='cid')
     parser.add_argument("--nan_constant", type=int, default=0)
-    parser.add_argument("--x_scaler", type=str, default='minmax')
-    parser.add_argument("--y_scaler", type=str, default='minmax')
+    parser.add_argument("--x_scaler", type=str, default='none')
+    parser.add_argument("--y_scaler", type=str, default='none')
     parser.add_argument("--outlier_detection", type=any, default=None)
 
     # 3. Model args
     parser.add_argument("--criterion", type=str, default='mse')
     parser.add_argument("--model_name", type=str, default='lstm', help='["mlp", "rnn" ,"lstm", "gru", "cnn", "da_encoder_decoder"]')
-    parser.add_argument("--epochs", type=int, default=1)
+    parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--optimizer", type=str, default='adamw')
     parser.add_argument("--num_workers", type=int, default=0)

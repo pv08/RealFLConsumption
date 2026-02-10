@@ -2,6 +2,8 @@ import pickle
 import numpy as np
 from logging import INFO
 from argparse import ArgumentParser
+
+from paths import FREQ_15MIN_DIR, TRAIN_DIR, TEST_DIR
 from src.dataset.processing import Processing
 from src.utils.logger import log
 from bson.binary import Binary
@@ -10,22 +12,23 @@ from bson.binary import Binary
 
 def main():
     def save_batch(X, y, _type: str, _id: str, loc: str):
-        if _type in ["train", "val"]:
-            path = f"dataset/pecanstreet/15min/{loc}/train/"
-            np.save(f"{path}/{_id}-{_type}-X.npy", X)
-            np.save(f"{path}/{_id}-{_type}-y.npy", y)
-        elif _type == "test":
-            path = f"dataset/pecanstreet/15min/{loc}/test/"
-            np.save(f"{path}/{_id}-{_type}-X.npy", X)
-            np.save(f"{path}/{_id}-{_type}-y.npy", y)
+        path = FREQ_15MIN_DIR / loc / ("train" if _type in ["train", "val"] else "test")
+        _id = str(_id)
+
+        X_folder = f"{_id}-{_type}-X.npy"
+        y_folder = f"{_id}-{_type}-y.npy"
+
+        np.save(str(path / X_folder), X)
+        np.save(str(path / y_folder), y)
+
         log(INFO, f"Saved {path} - X Shape: {X.shape} - y Shape: {y.shape}")
 
     parser = ArgumentParser()
     parser.add_argument("--mongo_uri", type=str, default='mongodb://localhost:27017')
     parser.add_argument("--model_name", type=str, default='lstm')
     parser.add_argument("--loc", type=str, default='austin')
-    parser.add_argument("--data_path", type=str, default='dataset/pecanstreet/15min/austin/train/')
-    parser.add_argument("--test_path", type=str, default='dataset/pecanstreet/15min/austin/test/')
+    parser.add_argument("--data_path", type=str, default=TRAIN_DIR)
+    parser.add_argument("--test_path", type=str, default=TEST_DIR)
     parser.add_argument("--test_size", type=float, default=0.2)
     parser.add_argument("--targets", type=list, default=['consumption'])
     parser.add_argument("--num_lags", type=int, default=96)
@@ -57,7 +60,7 @@ def main():
         "num_val_samples": len(X_val)
     }
 
-    with open(f"dataset/pecanstreet/15min/austin/train/{args.filter_bs}_metadata.pkl", "wb") as f:
+    with open(TRAIN_DIR / f"{args.filter_bs}_metadata.pkl", "wb") as f:
         pickle.dump(meta_obj, f)
 
     save_batch(X_train, y_train, "train", args.filter_bs, loc=args.loc)
