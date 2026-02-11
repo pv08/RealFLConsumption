@@ -69,7 +69,7 @@ class ClientLearning:
 
     def fit(self, params, criterion, optimizer, early_stopping, patience, lr, epochs, device):
         self.prepare_model(params)
-        log(DEBUG, f"Client {self.cid} waiting GPU gueue")
+        log(DEBUG, f"Client {self.cid} waiting GPU queue")
         train_loader, val_loader = self._load_data()
         self.model, train_loss_history, val_loss_history = self.train(train_loader=train_loader, val_loader=val_loader, model=self.model, epochs=epochs,
                                                             optimizer=optimizer, lr=lr, criterion=criterion,

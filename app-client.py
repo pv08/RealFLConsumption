@@ -87,7 +87,7 @@ def main():
     # 3. Model args
     parser.add_argument("--criterion", type=str, default='mse')
     parser.add_argument("--model_name", type=str, default='lstm', help='["mlp", "rnn" ,"lstm", "gru", "cnn", "da_encoder_decoder"]')
-    parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument("--epochs", type=int, default=15)
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--optimizer", type=str, default='adamw')
     parser.add_argument("--num_workers", type=int, default=0)
