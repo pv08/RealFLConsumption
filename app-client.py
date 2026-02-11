@@ -91,7 +91,7 @@ def main():
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--optimizer", type=str, default='adamw')
     parser.add_argument("--num_workers", type=int, default=0)
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=512)
     parser.add_argument("--early_stopping", type=bool, default=False)
     parser.add_argument("--patience", type=int, default=50)
 
