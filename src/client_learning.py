@@ -7,6 +7,7 @@ import torch.nn as nn
 import math
 import gc
 from torch.utils.data import DataLoader
+from torch.amp import autocast, GradScaler
 from typing import List, Optional, Union, Any, Dict
 from logging import INFO, DEBUG
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score, mean_pinball_loss
@@ -51,8 +52,10 @@ class ClientLearning:
         gc.collect()
 
     def _load_data(self):
-        train_loader = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
-        val_loader = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
+        train_loader = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False,
+                                  num_workers=self.args.num_workers, pin_memory=True)
+        val_loader = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False,
+                                num_workers=self.args.num_workers, pin_memory=True)
         return train_loader, val_loader
 
 
@@ -98,12 +101,17 @@ class ClientLearning:
         if model:
             self.prepare_model(model)
 
-        if data is None and method == 'test':
-            data = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
-        if data is None and method == 'train':
-            data = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
+        device = self.args.device
+        self.model.to(device)
 
-        loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=self.args.device)
+        if data is None and method == 'test':
+            data = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False,
+                              num_workers=self.args.num_workers, pin_memory=True)
+        if data is None and method == 'train':
+            data = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False,
+                              num_workers=self.args.num_workers, pin_memory=True)
+
+        loss, mse, rmse, mae, mape, r2, nrmse, pinball = self.test(self.model, data, params["criterion"], device=device)
         metrics = {"MSE": float(mse), "RMSE": float(rmse), "MAE": float(mae), "MAPE": float(mape), 'R^2': float(r2), "pinball": float(pinball)}
         _instances = len(data.dataset)
         del data
@@ -112,12 +120,15 @@ class ClientLearning:
     def test_model(self, params):
         self.prepare_model(params)
 
+        device = self.args.device
+        self.model.to(device)
+
         test_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="test", data_path=self.args.test_path)
         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=self.args.num_workers)
 
         test_mse, test_rmse, test_mae, test_mape, test_r2, test_nrmse, pinball, _, y_pred_test = self.test(self.model, test_loader,
                                                                                                     None,
-                                                                                                    device=self.args.device)
+                                                                                                    device=device)
 
         y_test = test_dataset.y
         inverted_y_test, inverted_y_pred_test = inverse_transform_test(
@@ -137,29 +148,32 @@ class ClientLearning:
         return results, inverted_values
 
 
-
+    @T.no_grad()
     def test(self, model: nn.Module, data, criterion, device: str="cuda"):
         model.to(device)
         model.eval()
         y_true, y_pred = [], []
         loss = 0.0
-        with T.no_grad():
+
+        with T.amp.autocast(device_type='cuda', dtype=T.float16):
             for x, y in data:
-                x, y = x.to(device), y.to(device)
+                x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
                 out = model(x)
+
                 if criterion is not None:
-                    loss += criterion(out, y).item()
-                y_true.extend(y)
-                y_pred.extend(out)
+                    loss += criterion(out, y).item() * x.size(0)
+
+                y_true.append(y.detach().cpu())
+                y_pred.append(out.detach().cpu())
         loss /= len(data.dataset)
 
-        y_true = T.stack(y_true)
-        y_pred = T.stack(y_pred)
-        mse, rmse, mae, mape, r2, nrmse, mean_pinball = self.accumulate_metrics(y_true.cpu(), y_pred.cpu())
-        del model
-        del data
+        y_true = T.cat(y_true)
+        y_pred = T.cat(y_pred)
+
+        mse, rmse, mae, mape, r2, nrmse, mean_pinball = self.accumulate_metrics(y_true, y_pred)
+
         if criterion is None:
-            return mse, rmse, mae, mape, r2, nrmse, mean_pinball, y_true.cpu(), y_pred.cpu()
+            return mse, rmse, mae, mape, r2, nrmse, mean_pinball, y_true, y_pred
         return loss, mse, rmse, mae, mape, r2, nrmse, mean_pinball
 
 
@@ -177,21 +191,35 @@ class ClientLearning:
 
         optimizer = self.get_optim(model=model, optim_name=optimizer, lr=lr)
         criterion = self.get_criterion(crit_name=criterion)
+
+        scaler = GradScaler('cuda')
+        model.to(device)
+
+        # try:
+        #     model = T.compile(model, mode="reduce-overhead")
+        #     log(INFO, "Modelo compilado com sucesso para otimização.")
+        # except Exception as e:
+        #     log(INFO, f"torch.compile não suportado ou falhou: {e}. Seguindo sem compilação.")
+
+        # esse compile pode otimizar o treinamento
+        # se seu sistema é de base Linux, teste esse compile
+
         for epoch in range(epochs):
-            model.to(device)
             model.train()
             epochs_loss = []
             for x, y in train_loader:
-                x, y = x.to(device), y.to(device)
+                x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
                 optimizer.zero_grad()
-                y_pred = model(x)
-                loss = criterion(y_pred, y)
 
-                loss.backward()
+                with autocast(device_type='cuda', dtype=T.float16):
+                    y_pred = model(x)
+                    loss = criterion(y_pred, y)
 
-                optimizer.step()
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+
                 epochs_loss.append(loss.item())
-                # Avaliar perda para ver esse del
                 del loss, y_pred
 
             train_loss = sum(epochs_loss) / len(epochs_loss)
