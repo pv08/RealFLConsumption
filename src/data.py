@@ -5,6 +5,8 @@ from pymongo import MongoClient
 from torch.utils.data import DataLoader, Dataset
 from typing import List, Optional
 
+from paths import TRAIN_DIR
+
 
 class MongoDBDataset(Dataset):
     def __init__(self, _id, _type, mongo_uri, loc, buffer_size=1024):
@@ -39,20 +41,15 @@ class MongoDBDataset(Dataset):
 
 
 class LocalFileDataset(Dataset):
-    def __init__(self, client_id, _type, data_path="dataset/pecanstreet/15min/austin/train/"):
-        # Caminhos para os arquivos pré-processados
-        self.X_path = f"{data_path}/{client_id}-{_type}-X.npy"
-        self.y_path = f"{data_path}/{client_id}-{_type}-y.npy"
+    def __init__(self, client_id, _type, data_path=TRAIN_DIR):
+        self.X_path = data_path / f"{client_id}-{_type}-X.npy"
+        self.y_path = data_path / f"{client_id}-{_type}-y.npy"
 
-        # Mapeia o arquivo em memória (não carrega na RAM ainda)
-        self.X = np.load(self.X_path, mmap_mode='r')
-        self.y = np.load(self.y_path, mmap_mode='r')
+        self.X = T.from_numpy(np.load(self.X_path)).float()
+        self.y = T.from_numpy(np.load(self.y_path)).float()
 
     def __len__(self):
         return self.X.shape[0]
 
     def __getitem__(self, idx):
-        # O dado só é lido do disco para a RAM no momento do acesso
-        x_tensor = T.from_numpy(self.X[idx].copy()).float()
-        y_tensor = T.from_numpy(self.y[idx].copy()).float()
-        return x_tensor, y_tensor
+        return self.X[idx], self.y[idx]
