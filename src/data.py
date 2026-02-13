@@ -45,14 +45,13 @@ class LocalFileDataset(Dataset):
         self.y_path = f"{data_path}/{client_id}-{_type}-y.npy"
 
         # Mapeia o arquivo em memória (não carrega na RAM ainda)
-        self.X = np.load(self.X_path, mmap_mode='r')
-        self.y = np.load(self.y_path, mmap_mode='r')
+        self.X = T.from_numpy(np.load(self.X_path)).float()
+        self.y = T.from_numpy(np.load(self.y_path)).float()
+
 
     def __len__(self):
         return self.X.shape[0]
 
     def __getitem__(self, idx):
         # O dado só é lido do disco para a RAM no momento do acesso
-        x_tensor = T.from_numpy(self.X[idx].copy()).float()
-        y_tensor = T.from_numpy(self.y[idx].copy()).float()
-        return x_tensor, y_tensor
+        return self.X[idx], self.y[idx]
