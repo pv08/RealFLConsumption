@@ -137,7 +137,7 @@ class FLServerState:
             self.best_loss = _round_losses[-1]
             self.best_round = self.current_round
             mkdir_if_not_exists(f'etc/fl/server/ckpt/{self.model_name}')
-            T.save(self.global_model.state_dict(), f"etc/fl/server/ckpt/{self.model_name}/global_model_loss-{round(self.best_loss, 4)}_round-{self.best_round}.pth")
+            T.save(self.global_model.state_dict(), f"etc/fl/server/ckpt/{self.model_name}/global_model_loss-{self.best_loss}_round-{self.best_round}.pth")
 
     def receive_test(self, client_id, results):
         if client_id not in self.tests_received:
@@ -198,20 +198,21 @@ class FLServerState:
         mkdir_if_not_exists(f'etc/fl/logs/{self.model_name}/local/')
 
         for k, v in self.updates_received.items():
-            with open(f'etc/fl/logs/{self.model_name}/local/{k}_fl_round_{self.current_round}_local_train_loss.npy', 'wb') as f:
+            mkdir_if_not_exists(f'etc/fl/logs/{self.model_name}/local/{k}')
+            with open(f'etc/fl/logs/{self.model_name}/local/{k}/fl_round_{self.current_round}_local_train_loss.npy', 'wb') as f:
                 np.save(f, np.array(v["train_history"]))
-            with open(f'etc/fl/logs/{self.model_name}/local/{k}_fl_round_{self.current_round}_local_val_loss.npy', 'wb') as f:
+            with open(f'etc/fl/logs/{self.model_name}/local/{k}/fl_round_{self.current_round}_local_val_loss.npy', 'wb') as f:
                 np.save(f, np.array(v["val_history"]))
 
             _tmp_model = copy.deepcopy(self.global_model)
             params_dict = zip(_tmp_model.state_dict().keys(), v["params"])
             state_dict = OrderedDict({k: T.Tensor(v) for k, v in params_dict})
             _tmp_model.load_state_dict(state_dict, strict=True)
-
+            mkdir_if_not_exists(f'etc/fl/local/ckpt/{self.model_name}/{k}')
             T.save(_tmp_model.state_dict(),
-                   f"etc/fl/local/ckpt/{self.model_name}/local_model_loss-{round(v['val_loss'], 4)}_round-{self.current_round}.pth")
+                   f"etc/fl/local/ckpt/{self.model_name}/{k}/local_model_loss-{v['val_loss']}_round-{self.current_round}.pth")
 
-            log(INFO, f"etc/fl/local/ckpt/{self.model_name}/local_model_loss-{round(v['val_loss'], 4)}_round-{self.current_round}.pth")
+            log(INFO, f"etc/fl/local/ckpt/{self.model_name}/{k}/local_model_loss-{v['val_loss']}_round-{self.current_round}.pth")
 
     def receive_update(self, client_id, client_res):
         """Recebe pesos treinados e verifica agregação."""

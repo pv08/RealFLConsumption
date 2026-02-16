@@ -166,7 +166,7 @@ class ClientLearning:
     def train(self, train_loader: DataLoader, val_loader: DataLoader, model: nn.Module, epochs: int=10, optimizer: str="adam",
               lr: float="1e-3", criterion: str="mse",
               early_stopping: bool=False, patience: int=50, device: str="cuda:0",
-              log_per: int=1):
+              log_per: int=1, fedprox_mu: float=0.0, reg1: float=0.0, reg2: float=0.0, max_grad_norm: float=0.0):
 
         best_model, best_loss, best_epoch = None, -1, -1
         train_loss_history, train_rmse_history = [], []
@@ -177,6 +177,9 @@ class ClientLearning:
 
         optimizer = self.get_optim(model=model, optim_name=optimizer, lr=lr)
         criterion = self.get_criterion(crit_name=criterion)
+
+        global_weight_collector = copy.deepcopy(list(model.parameters()))
+
         for epoch in range(epochs):
             model.to(device)
             model.train()
@@ -186,12 +189,24 @@ class ClientLearning:
                 optimizer.zero_grad()
                 y_pred = model(x)
                 loss = criterion(y_pred, y)
-
+                if fedprox_mu > 0.0:
+                    fedprox_reg = 0.0
+                    for param_index, param in enumerate(model.parameters()):
+                        fedprox_reg += ( (fedprox_mu / 2) * T.norm((param - global_weight_collector[param_index])) ** 2 )
+                    loss += fedprox_reg
+                if reg1 > 0.0:
+                    params = T.cat([p.view(-1) for name, p in model.named_parameters() if "bias" not in name])
+                    loss += reg1 * T.norm(params, 1)
+                if reg2 > 0.0:
+                    params = T.cat([p.view(-1) for name, p in model.named_parameters() if "bias" not in name])
+                    loss += reg2 * T.norm(params, 2)
                 loss.backward()
+
+                if max_grad_norm > 0.0:
+                    nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
 
                 optimizer.step()
                 epochs_loss.append(loss.item())
-                # Avaliar perda para ver esse del
                 del loss, y_pred
 
             train_loss = sum(epochs_loss) / len(epochs_loss)
