@@ -92,7 +92,6 @@ def main():
     parser.add_argument("--num_workers", type=int, default=0)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--early_stopping", type=bool, default=False)
-    parser.add_argument("--patience", type=int, default=50)
     parser.add_argument("--max_grad_norm", type=float, default=0.0)
     parser.add_argument("--fedprox_mu", type=float, default=0.0)
     parser.add_argument("--reg1", type=float, default=0.0)
