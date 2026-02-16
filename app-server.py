@@ -13,7 +13,6 @@ from argparse import ArgumentParser
 
 sel = selectors.DefaultSelector()
 
-# Instância global para ser usada pelo Message
 
 def accept_wrapper(sock, fl_state):
     conn, addr = sock.accept()  # Should be ready to read
