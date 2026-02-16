@@ -14,6 +14,19 @@ from src.models.gru import GRU
 from src.models.cnn import CNN
 
 
+def get_available_clients_location(loc: str="austin"):
+    localities = {
+        "austin": [8156, 2335, 9922, 3039, 4031, 8386, 7951, 3538, 9160, 5746, 1642, 6139, 2361, 3456, 9019, 661, 2818, 7800, 7536, 4767, 8565, 4373, 7901, 7719, 9278],
+        "california": [8342, 7114, 7062, 6547, 8733, 9612, 9836, 9775, 4495, 9213, 4934, 2606, 8061, 3687, 1731, 3938, 1450, 1524, 3864, 203, 5938, 6377, 8574],
+        "newyork": [1417, 142, 3000, 3996, 4550, 2096, 5058, 387, 2318, 5997, 5982, 914, 4283, 3700, 3517, 3488, 27, 5587, 1240, 2358, 558, 5679, 1222, 950, 9053],
+        "puertorico": [8235,3835,7667,3987,11386,10887,6056,939,4046,11126,10826,1092,1286,1245,7778,2006,2159,11933,2921,8997,371,9911,4204,4749,6406]
+    }
+    try:
+        cids = localities[loc]
+    except:
+        raise ValueError(f"Location not exist. Try austin, california, newyork or puertorico.")
+    return cids
+
 def get_model(model: str, input_dim: int, out_dim: int, lags: int = 10, device:str = 'cpu'):
     if model == "rnn":
         model = RNN(device=device, input_dim=input_dim, rnn_hidden_size=128, num_rnn_layers=1, rnn_dropout=0.0,
