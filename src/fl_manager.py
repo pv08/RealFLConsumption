@@ -83,7 +83,7 @@ class FLServerState:
         }
 
         # Otimiza o fedprox_mu apenas se a agregação for FedProx
-        if self.aggr_strategy.aggregation_alg.lower() == "fedprox":
+        if self.aggr_strategy.alg == "fedprox":
             hparams["fedprox_mu"] = trial.suggest_float("fedprox_mu", 0.001, 0.1)
 
         # Guardamos o trial ativo para podermos reportar a 'loss' mais tarde
