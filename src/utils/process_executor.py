@@ -5,11 +5,11 @@ from src.utils.logger import log
 
 
 # Função que roda ISOLADA em outro processo
-def _train_wrapper(queue, args, params):
+def _train_wrapper(queue, args, params, hparams):
     try:
         from src.client_learning import ClientLearning
 
-        trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
+        trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed, hparams=hparams)
 
         res = trainer.fit(params=params, criterion=args.criterion,
                           optimizer=args.optimizer, early_stopping=args.early_stopping,
@@ -33,7 +33,7 @@ def _evaluate_wrapper(queue, args, params):
 
 class ProcessExecutor:
     @staticmethod
-    def run_train(args, params):
+    def run_train(args, params, hparams: dict=None):
         # 'spawn' é obrigatório para PyTorch com CUDA
         ctx = mp.get_context('spawn')
         queue = ctx.Queue()
@@ -41,7 +41,7 @@ class ProcessExecutor:
         # Cria o processo
         p = ctx.Process(
             target=_train_wrapper,
-            args=(queue, args, params)
+            args=(queue, args, params, hparams)
         )
         p.start()
         try:

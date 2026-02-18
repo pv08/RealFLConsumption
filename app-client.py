@@ -1,9 +1,7 @@
 import selectors
 import socket
-import os
 import torch as T
 import time
-import copy
 from logging import INFO, WARNING, ERROR
 from src.comm import libclient
 from src.utils.functions import make_default_dirs, mkdir_if_not_exists
@@ -114,7 +112,8 @@ def main():
 
     try:
         while True:
-            req = create_request("check_in", {"client_id":args.filter_bs,
+            req = create_request("check_in",
+                                 {"client_id":args.filter_bs,
                                               "value": {
                                                   "device": args.device,
                                                   "model_name": args.model_name,
@@ -122,7 +121,7 @@ def main():
                                                   "output_dim": trainer.output_dim,
                                                   "lags": args.num_lags
                                               }
-                                              }
+                                        }
                                  )
             log(INFO, f"Connecting to {args.host}:{args.port} and waiting selection...")
             resp = send_and_wait(args.host, args.port, req)
@@ -162,10 +161,13 @@ def main():
                 start_time = time.time()
                 log(INFO, f"Starting training...")
                 global_model_params = data["weights"]
+                client_hparams = data.get("hparams", {})
+                log(INFO, f"Hyperparameters received from Server: {client_hparams}")
                 with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
                     res = ProcessExecutor.run_train(
                         args=args,
-                        params=global_model_params
+                        params=global_model_params,
+                        hparams=client_hparams
                     )
                     end_time = time.time()
                     training_time = end_time - start_time

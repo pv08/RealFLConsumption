@@ -5,7 +5,7 @@ from typing import List, Tuple
 from src.utils.logger import log
 from src.utils.functions import mkdir_if_not_exists, get_available_clients_location
 
-def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int):
+def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], optimize_clients: bool,  clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int):
     host, port = host_port
     mkdir_if_not_exists("lock_dir")
     services = {
@@ -15,9 +15,10 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
             "container_name": "fl_server",
             "volumes": [
                 "./etc:/app/etc",
-                "./lock_dir:/app/lock_dir"
+                "./lock_dir:/app/lock_dir",
+                "./optuna_data:/app/optuna_db"
             ],
-            "command": f"python app-server.py --host {host} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds}",
+            "command": f"python app-server.py --host {host} {'--optimize_clients' if optimize_clients else ''} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds}",
             "runtime": "nvidia",
             "deploy": {
                 "resources": {
@@ -94,21 +95,27 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('--loc', type=str, default='austin', help="[austin, california, newyork, puertorico]")
-    parser.add_argument('--model_name', type=str, default='rnn', help="[rnn, lstm, gru, cnn]")
     parser.add_argument('--host', type=str, default="0.0.0.0")
     parser.add_argument('--port', type=int, default=65432)
-    parser.add_argument('--clients_per_round', type=int, default=5)
+
+    parser.add_argument('--loc', type=str, default='austin', help="[austin, california, newyork, puertorico]")
+    parser.add_argument('--model_name', type=str, default='rnn', help="[rnn, lstm, gru, cnn]")
     parser.add_argument('--max_rounds', type=int, default=10)
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=1024)
     parser.add_argument('--num_workers', type=int, default=0)
+    parser.add_argument('--clients_per_round', type=int, default=5)
+    parser.add_argument('--optimize_clients', action='store_true')
+
+
     parser.add_argument('--gpu_slots', type=int, default=1)
 
     args = parser.parse_args()
     cids = get_available_clients_location(args.loc)
 
-    _create_compose(model=args.model_name, location=args.loc, cids=cids, host_port=(args.host, args.port), clients_per_round=args.clients_per_round,
+    _create_compose(model=args.model_name, location=args.loc, cids=cids,
+                    host_port=(args.host, args.port), optimize_clients=args.optimize_clients,
+                    clients_per_round=args.clients_per_round,
                     max_rounds=args.max_rounds, gpu_slots=args.gpu_slots, epochs=args.epochs,
                     batch_size=args.batch_size, num_workers=args.num_workers)
 if __name__ == "__main__":

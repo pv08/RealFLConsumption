@@ -28,6 +28,7 @@ def main():
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
     parser.add_argument('--clients_per_round', type=int, default=1)
+    parser.add_argument('--optimize_clients', action='store_true')
     parser.add_argument('--required_clients', type=int, default=1)
     parser.add_argument('--max_rounds', type=int, default=2)
     parser.add_argument("--aggregation", type=str, default="fedavg")
@@ -36,7 +37,7 @@ def main():
     host, port = args.host, args.port
     strategy = RandomSelection()
     aggregation = Aggregator(aggregation_alg=args.aggregation)
-    fl_state = FLServerState(selection_strategy=strategy, aggr_strategy=aggregation, required_clients=args.required_clients, clients_per_round=args.clients_per_round, max_rounds=args.max_rounds)
+    fl_state = FLServerState(selection_strategy=strategy, aggr_strategy=aggregation, required_clients=args.required_clients, clients_per_round=args.clients_per_round, max_rounds=args.max_rounds, optimize_clients=args.optimize_clients)
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     lsock.bind((host, port))
