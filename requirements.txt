@@ -8,3 +8,6 @@ sympy==1.14.0
 tqdm==4.67.1
 pymongo==4.16.0
 torch==2.9.1
+optuna==4.7.0
+optuna-dashboard==0.20.0
+twilio==9.10.1

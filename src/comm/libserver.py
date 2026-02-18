@@ -1,10 +1,7 @@
-
 import pickle
 import selectors
 import struct
 import sys
-from logging import DEBUG
-from src.utils.logger import log
 
 
 
@@ -102,7 +99,6 @@ class Message:
         elif action == "send_test":
             self.fl_state.receive_test(client_id, value)
             return {"action": "registered"}
-
 
         elif action == "send_update":
             self.fl_state.receive_update(client_id, value)

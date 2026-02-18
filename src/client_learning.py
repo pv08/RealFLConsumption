@@ -17,10 +17,15 @@ from src.data import MongoDBDataset, LocalFileDataset
 from src.utils.early_stopping import EarlyStopping
 
 class ClientLearning:
-    def __init__(self, args, cid, seed: int):
+    def __init__(self, args, cid, seed: int, hparams: Optional[dict]=None):
         self.args = args
         self.cid = cid
         self.seed_all(seed)
+
+        if hparams:
+            for k, v in hparams.items():
+                setattr(self.args, k, v)
+
 
         with open(f"{self.args.data_path}/{self.args.filter_bs}_metadata.pkl", "rb") as f:
             _meta_doc =  pickle.load(f)

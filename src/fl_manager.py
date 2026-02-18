@@ -1,17 +1,19 @@
 import copy
+import os
 import numpy as np
 import torch as T
 import pickle
+import optuna
 from collections import defaultdict
 from logging import INFO, WARNING
 from typing import List, Dict, Tuple
-from functools import reduce
+from twilio.rest import Client
 from collections import OrderedDict
 from src.utils.functions import mkdir_if_not_exists, get_model
 from src.utils.logger import log
 
 class FLServerState:
-    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10):
+    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True):
         self.global_model = None
         self.global_weights = None
         self.phase = "WAITING_CLIENTS" # WAITING_CLIENTS, INITIAL_EVAL, TRAINING, GLOBAL_EVAL
@@ -21,6 +23,9 @@ class FLServerState:
         self.clients_per_round = clients_per_round
         self.max_rounds = max_rounds
         self.simulation_over = False
+        self.client = Client(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN'))
+        self.twilio_from_number = os.getenv('TWILIO_PHONE_NUMBER')
+        self.twilio_dest_number = os.getenv('DEST_PHONE_NUMBER')
 
         self.current_round = 0
         self.registered_clients = defaultdict()
@@ -32,10 +37,76 @@ class FLServerState:
         self.evaluations_received = {}
         self.tests_received = {}
 
+        self.optimize_clients = optimize_clients
+        if self.optimize_clients:
+            log(WARNING, f"[Optuna] Optimizing procedure activated: all clients available will receive hparams from Optuna")
+        else:
+            log(WARNING, f"No optimization procedure activated. Hparams will be fixed")
+        self.client_studies = {}
+        self.client_active_trials = {}
+
         self.history = defaultdict(list)
         self.best_loss, self.best_round = np.inf, -1
         log(INFO, f"Aggregation Algorithm: {repr(self.aggr_strategy)}")
         log(INFO, f"Client Selection Mechanism: {repr(self.selection_strategy)}")
+
+    def _get_or_create_study(self, client_id):
+        """Cria um estudo do Optuna para o cliente, se ainda não existir."""
+        mkdir_if_not_exists("optuna_db/")
+
+        storage_url = f"sqlite:///optuna_db/fl_simulation.db"
+
+        study_name = f"study_{client_id}"
+
+        if client_id not in self.client_studies:
+            log(INFO, f"[Optuna] Creating new study for client {client_id}")
+            self.client_studies[client_id] = optuna.create_study(
+                study_name=study_name,
+                storage=storage_url,
+                direction="minimize",
+                load_if_exists=True
+            )
+        return self.client_studies[client_id]
+
+    def _get_hparams_from_optuna(self, client_id):
+        """Pede ao Optuna uma nova configuração de hiperparâmetros."""
+        study = self._get_or_create_study(client_id)
+
+        # O Optuna gera um novo 'trial' (uma tentativa)
+        trial = study.ask()
+
+        # Definimos o espaço de busca
+        hparams = {
+            "lr": trial.suggest_float("lr", 1e-5, 1e-2, log=True),
+            "batch_size": trial.suggest_categorical("batch_size", [8, 16, 32, 64, 128, 256, 512, 1024]),
+            "optimizer": trial.suggest_categorical("optimizer", ["adam", "adamw", "sgd"])
+        }
+
+        # Otimiza o fedprox_mu apenas se a agregação for FedProx
+        if self.aggr_strategy.aggregation_alg.lower() == "fedprox":
+            hparams["fedprox_mu"] = trial.suggest_float("fedprox_mu", 0.001, 0.1)
+
+        # Guardamos o trial ativo para podermos reportar a 'loss' mais tarde
+        log(INFO, f"[Optuna] Client {client_id} | Trial {trial.number} | New suggestion generated: {hparams}")
+        self.client_active_trials[client_id] = trial
+
+        return hparams
+
+    def _send_whatsapp_notification(self, message_body: str):
+        """Envia uma notificação via WhatsApp utilizando a API do Twilio."""
+        if not self.twilio_from_number or not self.twilio_dest_number:
+            log(WARNING, "Telephone number of Twilio not set up. Notification ignored.")
+            return
+        try:
+            # O Twilio exige o prefixo 'whatsapp:' para mensagens via WhatsApp
+            msg = self.client.messages.create(
+                from_=f'whatsapp:{self.twilio_from_number}',
+                body=message_body,
+                to=f'whatsapp:{self.twilio_dest_number}'
+            )
+            log(INFO, f"Notification sent successfully (SID: {msg.sid})")
+        except Exception as e:
+            log(WARNING, f"Fail on sending notification via WhatsApp: {e}")
 
 
     @staticmethod
@@ -112,16 +183,22 @@ class FLServerState:
         if self.phase == "TRAINING":
             if client_id in self.selected_clients:
                 if client_id not in self.updates_received:
-                    return "train", {"current_round": self.current_round, "weights": self.global_weights}
+                    hparams = {}
+                    if self.optimize_clients:
+                        hparams = self._get_hparams_from_optuna(client_id)
+                    data = {
+                        "current_round": self.current_round,
+                        "weights": self.global_weights,
+                        "hparams": hparams
+                    }
+                    return "train", data
                 else:
-                    # Já enviou o update, espera a próxima fase
                     self._add_to_waitlist(message_obj)
                     return "defer", None
             else:
                 # NÃO SELECIONADO: Fica em Long Polling até a fase mudar para GLOBAL_EVAL
                 self._add_to_waitlist(message_obj)
                 return "defer", None
-
         return "defer", None
 
     def _log_and_save_evaluation_procedure(self):
@@ -217,6 +294,18 @@ class FLServerState:
     def receive_update(self, client_id, client_res):
         """Recebe pesos treinados e verifica agregação."""
         model_params, train_history, num_train, train_loss, train_metrics, val_history, num_val, val_loss, val_metrics, time_spent = client_res
+
+        if self.optimize_clients and client_id in self.client_active_trials:
+            trial = self.client_active_trials[client_id]
+            study = self.client_studies[client_id]
+            study.tell(trial, val_loss)
+
+            log(INFO, f"[Optuna] Client {client_id} | Trial {trial.number} finished with val_Loss: {val_loss:.6f}")
+            log(INFO, f"[Optuna] Client {client_id} | Best val_loss so far: {study.best_value:.6f}")
+            log(INFO, f"[Optuna] Client {client_id} | Best hparams so far: {study.best_params}")
+
+            del self.client_active_trials[client_id]
+
         if client_id not in self.updates_received:
             self.updates_received[client_id] = {"params": model_params, "train_history": train_history, "train_instances": num_train, "train_loss": train_loss,
                                                 "train_metrics": train_metrics, "val_history":val_history, "val_instances": num_val,
@@ -233,11 +322,10 @@ class FLServerState:
             self.phase = "GLOBAL_EVAL"
             self._notify_pending_clients()
 
-
     def _notify_all_stop(self):
         """Acorda TODOS os clientes na fila de espera e manda parar"""
         log(WARNING, f"Sending stop signal to {len(self.pending_messages)} waiting.")
-
+        # self._send_whatsapp_notification(f"Telling every client to stop.")
         for msg in self.pending_messages:
             # Envia a ordem de parada
             content = {"action": "stop", "data": {"architecture": self.global_model, "weights": self.global_weights}}
@@ -256,7 +344,7 @@ class FLServerState:
 
         log(INFO, f"Starting round {self.current_round}...")
         log(INFO, f"Clients selected: {self.selected_clients}")
-
+        # self._send_whatsapp_notification(f"Starting round {self.current_round} with {self.selected_clients} clients.")
         self._notify_pending_clients()
 
 
