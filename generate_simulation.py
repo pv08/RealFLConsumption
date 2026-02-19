@@ -29,6 +29,9 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
             },
             "ports": [f"{port}:{port}"],
             "environment": [
+                "WANDB_API_KEY =${WANDB_API_KEY}",
+                "WANDB_PROJECT =${WANDB_PROJECT}",
+                "WANDB_GROUP =${WANDB_GROUP}",
                 "CUDA_LAUNCH_BLOCKING=1",
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
@@ -57,6 +60,9 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
             },
             "command": f"""python app-client.py --model_name {model} --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers {num_workers} --loc="{location}" --gpu_slots="{gpu_slots}" --data_path "dataset/pecanstreet/15min/{location}/train/" --test_path "dataset/pecanstreet/15min/{location}/test/"  --host fl-server""",
             "environment": [
+                "WANDB_API_KEY =${WANDB_API_KEY}",
+                "WANDB_PROJECT =${WANDB_PROJECT}",
+                "WANDB_GROUP =${WANDB_GROUP}",
                 "CUDA_LAUNCH_BLOCKING=1",
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "CUBLAS_WORKSPACE_CONFIG=:4096:8",

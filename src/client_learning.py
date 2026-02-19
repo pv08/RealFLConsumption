@@ -6,6 +6,7 @@ import torch as T
 import torch.nn as nn
 import math
 import gc
+import wandb
 from torch.utils.data import DataLoader
 from typing import List, Optional, Union, Any, Dict
 from logging import INFO, DEBUG
@@ -22,10 +23,6 @@ class ClientLearning:
         self.cid = cid
         self.seed_all(seed)
 
-        if hparams:
-            for k, v in hparams.items():
-                setattr(self.args, k, v)
-
 
         with open(f"{self.args.data_path}/{self.args.filter_bs}_metadata.pkl", "rb") as f:
             _meta_doc =  pickle.load(f)
@@ -35,6 +32,21 @@ class ClientLearning:
         self.y_scaler = pickle.loads(_meta_doc["y_scaler"])
         self.train_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="train", data_path=self.args.data_path)
         self.val_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="val", data_path=self.args.data_path)
+
+        if wandb.run is None:
+            wandb.init(
+                project=getattr(self.args, 'wandb_project', 'fl_simulation'),
+                group=getattr(self.args, 'wandb_group', 'experiment_1'),
+                name=f"client_{self.cid}",
+                job_type="client_train",
+                config=vars(self.args),
+                reinit=True
+            )
+
+        if hparams:
+            for k, v in hparams.items():
+                setattr(self.args, k, v)
+            wandb.config.update(hparams, allow_val_change=True)
 
         self.model = None
 
@@ -220,6 +232,14 @@ class ClientLearning:
             val_loss, val_mse, val_rmse, val_mae, val_mape, val_r2, val_nrmse, mean_pinball = self.test(model, val_loader,
                                                                                  criterion, device)
             log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{epochs} | [Train]: loss {train_loss:.6f}, MSE: {train_mse:.6f} | [Val]: loss {val_loss:.6f}, MSE: {val_mse:.6f}")
+            wandb.log({
+                "client/train_loss": train_loss,
+                "client/val_loss": val_loss,
+                "client/train_rmse": train_rmse,
+                "client/val_rmse": val_rmse,
+                "client/epoch": epoch + 1,
+                "client/lr": lr
+            })
             train_loss_history.append(train_mse)
             train_rmse_history.append(train_rmse)
             val_loss_history.append(val_mse)
