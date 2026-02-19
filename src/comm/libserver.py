@@ -101,10 +101,11 @@ class Message:
             return {"action": "registered"}
 
         elif action == "send_update":
-            self.fl_state.receive_update(client_id, value)
-            return {"action": "registered"}
-
-        return {"action": "error", "value": "Unknown action"}
+            success = self.fl_state.receive_update(client_id, value)
+            if success:
+                return {"action": "registered"}
+            else:
+                return {"action": "error", "value": "Unknown action"}
 
     def trigger_delayed_response(self, content):
         try:
