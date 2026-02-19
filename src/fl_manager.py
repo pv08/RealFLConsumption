@@ -10,6 +10,7 @@ from typing import List, Dict, Tuple
 from twilio.rest import Client
 from collections import OrderedDict
 from src.utils.functions import mkdir_if_not_exists, get_model
+from src.structure.blockchain import Blockchain
 from src.utils.logger import log
 
 class FLServerState:
@@ -143,6 +144,7 @@ class FLServerState:
                   lags=_tmp_obj["lags"])
         self.global_weights = [val.cpu().numpy() for _, val in self.global_model.state_dict().items()]
         self.model_name = type(self.global_model).__name__
+        self.ledger = Blockchain(log_dir=f'etc/fl/logs/{self.model_name}/')
         log(INFO, f"Global model architecture defined as {type(self.global_model).__name__}")
 
     def register_client(self, client_id, message_obj):
@@ -295,6 +297,10 @@ class FLServerState:
         """Recebe pesos treinados e verifica agregação."""
         model_params, train_history, num_train, train_loss, train_metrics, val_history, num_val, val_loss, val_metrics, time_spent = client_res
 
+        if not self.ledger.add_block(client_id=client_id, model_weights=model_params):
+            log(WARNING, f"Update from {client_id} rejected by Blockchain Protocol.")
+            return False
+
         if self.optimize_clients and client_id in self.client_active_trials:
             trial = self.client_active_trials[client_id]
             study = self.client_studies[client_id]
@@ -321,6 +327,8 @@ class FLServerState:
             self.updates_received = {}
             self.phase = "GLOBAL_EVAL"
             self._notify_pending_clients()
+        return True
+
 
     def _notify_all_stop(self):
         """Acorda TODOS os clientes na fila de espera e manda parar"""
