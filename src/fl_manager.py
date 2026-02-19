@@ -4,6 +4,7 @@ import numpy as np
 import torch as T
 import pickle
 import optuna
+import wandb
 from collections import defaultdict
 from logging import INFO, WARNING
 from typing import List, Dict, Tuple
@@ -14,9 +15,24 @@ from src.structure.blockchain import Blockchain
 from src.utils.logger import log
 
 class FLServerState:
-    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True):
+    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True, wandb_config: dict=None):
         self.global_model = None
         self.global_weights = None
+        self.wandb_config = wandb_config or {}
+        wandb.init(
+            project=self.wandb_config.get('project', 'fl_simulation'),
+            group=self.wandb_config.get('group', 'experiment_1'),
+            name="server_orchestrator",
+            job_type="server",
+            config={
+                "strategy": str(selection_strategy),
+                "aggregation": str(aggr_strategy),
+                "clients_per_round": clients_per_round,
+                "required_clients": required_clients,
+                "max_rounds": max_rounds
+            },
+            reinit=True
+        )
         self.phase = "WAITING_CLIENTS" # WAITING_CLIENTS, INITIAL_EVAL, TRAINING, GLOBAL_EVAL
         self.selection_strategy = selection_strategy
         self.aggr_strategy = aggr_strategy
@@ -217,6 +233,16 @@ class FLServerState:
             self.best_round = self.current_round
             mkdir_if_not_exists(f'etc/fl/server/ckpt/{self.model_name}')
             T.save(self.global_model.state_dict(), f"etc/fl/server/ckpt/{self.model_name}/global_model_loss-{self.best_loss}_round-{self.best_round}.pth")
+
+        log_dict = {
+            "server/global_loss": _weighted_losses,
+            "server/round": self.current_round,
+            "server/best_loss": self.best_loss
+        }
+        for metric_name, metric_val in _weighted_metrics.items():
+            log_dict[f"server/global_{metric_name}"] = metric_val
+
+        wandb.log(log_dict)
 
     def receive_test(self, client_id, results):
         if client_id not in self.tests_received:

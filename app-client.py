@@ -1,3 +1,4 @@
+import os
 import selectors
 import socket
 import torch as T
@@ -67,6 +68,8 @@ def main():
     # 1. Communication args
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
+    parser.add_argument('--wandb_project', type=str, default=os.getenv('WANDB_PROJECT', 'fl_default'))
+    parser.add_argument('--wandb_group', type=str, default=os.getenv('WANDB_GROUP', 'default_group'))
 
     # 2. Data args
     parser.add_argument("--data_path", type=str, default='dataset/pecanstreet/15min/austin/train/')
@@ -158,6 +161,8 @@ def main():
                 send_and_wait(host, port, req_m)
 
             elif action == "train":
+                setattr(args, 'wandb_project', args.wandb_project)
+                setattr(args, 'wandb_group', args.wandb_group)
                 start_time = time.time()
                 log(INFO, f"Starting training...")
                 global_model_params = data["weights"]

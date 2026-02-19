@@ -1,9 +1,10 @@
 import selectors
 import socket
 import traceback
+import os
 from logging import INFO, ERROR, WARNING
 from src.comm import libserver
-from src.base.selection_strategy import BaseSelectionStrategy, RandomSelection
+from src.base.selection_strategy import RandomSelection
 from src.base.aggregation_strategy import Aggregator
 from src.fl_manager import FLServerState
 
@@ -32,12 +33,22 @@ def main():
     parser.add_argument('--required_clients', type=int, default=1)
     parser.add_argument('--max_rounds', type=int, default=2)
     parser.add_argument("--aggregation", type=str, default="fedavg")
+    parser.add_argument('--wandb_project', type=str, default=os.getenv('WANDB_PROJECT', 'fl_default'))
+    parser.add_argument('--wandb_group', type=str, default=os.getenv('WANDB_GROUP', 'default_group'))
+
     args = parser.parse_args()
     print(args)
     host, port = args.host, args.port
     strategy = RandomSelection()
     aggregation = Aggregator(aggregation_alg=args.aggregation)
-    fl_state = FLServerState(selection_strategy=strategy, aggr_strategy=aggregation, required_clients=args.required_clients, clients_per_round=args.clients_per_round, max_rounds=args.max_rounds, optimize_clients=args.optimize_clients)
+    wandb_config = {
+        'project': args.wandb_project,
+        'group': args.wandb_group
+    }
+    fl_state = FLServerState(selection_strategy=strategy, aggr_strategy=aggregation,
+                             required_clients=args.required_clients,
+                             clients_per_round=args.clients_per_round,
+                             max_rounds=args.max_rounds, optimize_clients=args.optimize_clients, wandb_config=wandb_config)
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     lsock.bind((host, port))
