@@ -14,7 +14,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from collections import OrderedDict
 from src.utils.functions import inverse_transform_test
 from src.utils.logger import log
-from src.data import MongoDBDataset, LocalFileDataset
+from src.data import LocalFileDataset
 from src.utils.early_stopping import EarlyStopping
 
 class ClientLearning:
@@ -23,9 +23,9 @@ class ClientLearning:
         self.cid = cid
         self.seed_all(seed)
 
-
         with open(f"{self.args.data_path}/{self.args.filter_bs}_metadata.pkl", "rb") as f:
             _meta_doc =  pickle.load(f)
+
         self.input_dim = _meta_doc["input_dim"]
         self.output_dim = _meta_doc["output_dim"]
         self.x_scaler = pickle.loads(_meta_doc["x_scaler"])

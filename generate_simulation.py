@@ -29,9 +29,9 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
             },
             "ports": [f"{port}:{port}"],
             "environment": [
-                "WANDB_API_KEY =${WANDB_API_KEY}",
-                "WANDB_PROJECT =${WANDB_PROJECT}",
-                "WANDB_GROUP =${WANDB_GROUP}",
+                "WANDB_API_KEY=${WANDB_API_KEY}",
+                "WANDB_PROJECT=${WANDB_PROJECT}",
+                f"WANDB_GROUP={location}-{model}-{'optimized' if optimize_clients else 'not-optimized'}",
                 "CUDA_LAUNCH_BLOCKING=1",
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
@@ -62,7 +62,7 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
             "environment": [
                 "WANDB_API_KEY =${WANDB_API_KEY}",
                 "WANDB_PROJECT =${WANDB_PROJECT}",
-                "WANDB_GROUP =${WANDB_GROUP}",
+                f"WANDB_GROUP={location}-{model}-{'optimized' if optimize_clients else 'not-optimized'}",
                 "CUDA_LAUNCH_BLOCKING=1",
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "CUBLAS_WORKSPACE_CONFIG=:4096:8",
