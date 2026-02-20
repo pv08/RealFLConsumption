@@ -2,8 +2,10 @@
 /etc/
 __pycache__/
 .idea
-.DS_Store
 /.ipynb_checkpoints/
+wandb/
+.vscode/
+.DS_Store
 *.txt
 .env
-wandb/
+
