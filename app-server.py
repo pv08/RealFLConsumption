@@ -7,7 +7,6 @@ from src.comm import libserver
 from src.base.selection_strategy import RandomSelection
 from src.base.aggregation_strategy import Aggregator
 from src.fl_manager import FLServerState
-
 from src.utils.logger import log
 from argparse import ArgumentParser
 
@@ -81,8 +80,8 @@ def main():
                             f"{traceback.format_exc()}"
                         )
                         message.close()
-            if fl_state.simulation_over and len(fl_state.tests_received) >=  fl_state.required_clients:
-                log(INFO, "Simulação concluída. Encerrando servidor...")
+            if fl_state.simulation_over and len(fl_state.tests_received) >= fl_state.required_clients:
+                log(INFO, "Simulation concluded. Finishing the server...")
                 break
     except KeyboardInterrupt:
         log(WARNING, "Caught keyboard interrupt, exiting")
