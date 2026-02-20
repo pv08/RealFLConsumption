@@ -40,10 +40,6 @@ class FLServerState:
         self.clients_per_round = clients_per_round
         self.max_rounds = max_rounds
         self.simulation_over = False
-        self.client = Client(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN'))
-        self.twilio_from_number = os.getenv('TWILIO_PHONE_NUMBER')
-        self.twilio_dest_number = os.getenv('DEST_PHONE_NUMBER')
-
         self.current_round = 0
         self.registered_clients = defaultdict()
         self.selected_clients = set()
@@ -108,22 +104,6 @@ class FLServerState:
         self.client_active_trials[client_id] = trial
 
         return hparams
-
-    def _send_whatsapp_notification(self, message_body: str):
-        """Envia uma notificação via WhatsApp utilizando a API do Twilio."""
-        if not self.twilio_from_number or not self.twilio_dest_number:
-            log(WARNING, "Telephone number of Twilio not set up. Notification ignored.")
-            return
-        try:
-            # O Twilio exige o prefixo 'whatsapp:' para mensagens via WhatsApp
-            msg = self.client.messages.create(
-                from_=f'whatsapp:{self.twilio_from_number}',
-                body=message_body,
-                to=f'whatsapp:{self.twilio_dest_number}'
-            )
-            log(INFO, f"Notification sent successfully (SID: {msg.sid})")
-        except Exception as e:
-            log(WARNING, f"Fail on sending notification via WhatsApp: {e}")
 
 
     @staticmethod
@@ -359,7 +339,6 @@ class FLServerState:
     def _notify_all_stop(self):
         """Acorda TODOS os clientes na fila de espera e manda parar"""
         log(WARNING, f"Sending stop signal to {len(self.pending_messages)} waiting.")
-        # self._send_whatsapp_notification(f"Telling every client to stop.")
         for msg in self.pending_messages:
             # Envia a ordem de parada
             content = {"action": "stop", "data": {"architecture": self.global_model, "weights": self.global_weights}}
@@ -373,12 +352,19 @@ class FLServerState:
         self.selected_clients = set(
             self.selection_strategy.select(self.registered_clients, self.clients_per_round)
         )
+
+        selection_log = {"server/round": self.current_round}
+
         self.history["client_selection"].append({"round": self.current_round, "clients": list(self.selected_clients)})
+        for cid in self.registered_clients.keys():
+            selection_log[f"selection/client_{cid}"] = 1 if cid in selection_log else 0
+
         self.phase = "TRAINING"
+
+        wandb.log(selection_log)
 
         log(INFO, f"Starting round {self.current_round}...")
         log(INFO, f"Clients selected: {self.selected_clients}")
-        # self._send_whatsapp_notification(f"Starting round {self.current_round} with {self.selected_clients} clients.")
         self._notify_pending_clients()
 
 
