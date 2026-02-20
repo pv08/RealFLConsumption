@@ -7,5 +7,5 @@ wandb/
 .vscode/
 .DS_Store
 *.txt
-.env
+*.env
 
