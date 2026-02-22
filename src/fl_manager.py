@@ -67,7 +67,7 @@ class FLServerState:
         """Cria um estudo do Optuna para o cliente, se ainda não existir."""
         mkdir_if_not_exists("optuna_db/")
 
-        storage_url = f"sqlite:///optuna_db/fl_simulation.db"
+        storage_url = f"sqlite:///optuna_db/fl_simulation_{self.model_name}.db"
 
         study_name = f"study_{client_id}"
 
