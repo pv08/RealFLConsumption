@@ -100,13 +100,13 @@ def main():
     parser.add_argument("--patience", type=int, default=50)
 
     # 4. TimeVAE model args
-    parser.add_argument("--latent_dim", type=int, default=8)
+    parser.add_argument("--latent_dim", type=int, default=96)
     parser.add_argument("--timevae_epochs", type=int, default=200)
     parser.add_argument('--custom_seats', type=any, default=None)
     parser.add_argument('--hidden_dims', type=list, default=[128, 256, 512])
     parser.add_argument('--trend_poly', type=int, default=0)
     parser.add_argument('--reconstruction_wt', type=float, default=3.0)
-    parser.add_argument('--use_residual_conn', type='store_true')
+    parser.add_argument('--use_residual_conn', action='store_true')
 
     # 5. Device args
     parser.add_argument("--gpu_slots", type=int, default=1)
@@ -115,7 +115,7 @@ def main():
     parser.add_argument("--device", type=str, default=T.device('cuda:0' if T.cuda.is_available() else 'cpu'))
 
     args = parser.parse_args()
-    mkdir_if_not_exists("/app/lock_dir")
+    # mkdir_if_not_exists("/app/lock_dir")
 
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)
@@ -157,42 +157,56 @@ def main():
                 break
 
             elif action == "evaluate":
-                log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")
+                log(INFO, f"Evaluating global model at {data.get('phase', 'N/A')} phase")
 
                 req_latent_space = data.get("req_latent_space", False)
 
                 global_model_params = data["weights"]
-                with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
-                    num_test_instances, test_loss, test_eval_metrics, latent_space = ProcessExecutor.run_evaluate(
-                        args=args,
-                        params=global_model_params,
-                        req_latent_space=req_latent_space
-                    )
+                # with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
+                #     num_test_instances, test_loss, test_eval_metrics, latent_space = ProcessExecutor.run_evaluate(
+                #         args=args,
+                #         params=global_model_params,
+                #         req_latent_space=req_latent_space
+                #     )
+
+                trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
+
+                num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
+                latent_space = None
+                if req_latent_space:
+                    log(INFO, f"Server requested {args.filter_bs}'s latent space to cluster")
+                    latent_space = trainer.get_latent_space(args.latent_dim, args.timevae_epochs)
 
                 req_m = create_request("send_metrics", {"client_id": args.filter_bs, "value": {"instances": num_test_instances, "loss": test_loss,
                                                                                                  "metrics": test_eval_metrics, "latent_space": latent_space}})
                 send_and_wait(host, port, req_m)
 
             elif action == "train":
-                setattr(args, 'wandb_project', args.wandb_project)
-                setattr(args, 'wandb_group', args.wandb_group)
+                # setattr(args, 'wandb_project', args.wandb_project)
+                # setattr(args, 'wandb_group', args.wandb_group)
                 start_time = time.time()
                 log(INFO, f"Starting training...")
                 global_model_params = data["weights"]
                 client_hparams = data.get("hparams", {})
                 log(INFO, f"Hyperparameters received from Server: {client_hparams}")
-                with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
-                    res = ProcessExecutor.run_train(
-                        args=args,
-                        params=global_model_params,
-                        hparams=client_hparams
-                    )
-                    end_time = time.time()
-                    training_time = end_time - start_time
-                    log(INFO,f"Time spent to train client {args.filter_bs} {training_time} seconds --> {(training_time) / 3600} hours")
-                    res += (training_time, )
+                # with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
+                #     res = ProcessExecutor.run_train(
+                #         args=args,
+                #         params=global_model_params,
+                #         hparams=client_hparams
+                #     )
+                trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed, hparams=client_hparams)
 
-                    trainer.clean_up()
+                res = trainer.fit(params=global_model_params, criterion=args.criterion,
+                                  optimizer=args.optimizer, early_stopping=args.early_stopping,
+                                  patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
+
+                end_time = time.time()
+                training_time = end_time - start_time
+                log(INFO,f"Time spent to train client {args.filter_bs} {training_time} seconds --> {(training_time) / 3600} hours")
+                res += (training_time, )
+
+                trainer.clean_up()
                 # B. Envia Update
                 req_u = create_request("send_update", {"client_id": args.filter_bs, "value": res})
                 ack = send_and_wait(args.host, args.port, req_u)

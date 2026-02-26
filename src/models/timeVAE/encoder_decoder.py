@@ -1,6 +1,6 @@
 import torch as T
 import torch.nn as nn
-from inner_layers import Sampling, LevelModel, ResidualConnection, TrendLayer, SeasonalLayer
+from src.models.timeVAE.inner_layers import Sampling, LevelModel, ResidualConnection, TrendLayer, SeasonalLayer
 
 class TimeVAEEncoder(nn.Module):
     def __init__(self, seq_len, feat_dim, hidden_sizes, latent_dim, device):

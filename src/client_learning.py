@@ -9,11 +9,12 @@ import math
 import gc
 import wandb
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 from typing import List, Optional, Union, Any, Dict
 from logging import INFO, DEBUG
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score, mean_pinball_loss
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from src.models.timeVAE.timevae import TimeVAE
 from src.utils.functions import inverse_transform_test, mkdir_if_not_exists
 from src.utils.logger import log
@@ -36,20 +37,20 @@ class ClientLearning:
         self.train_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="train", data_path=self.args.data_path)
         self.val_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="val", data_path=self.args.data_path)
 
-        if wandb.run is None:
-            wandb.init(
-                project=getattr(self.args, 'wandb_project', 'fl_simulation'),
-                group=getattr(self.args, 'wandb_group', 'experiment_1'),
-                name=f"client_{self.cid}",
-                job_type="client_train",
-                config=vars(self.args),
-                reinit=True
-            )
+        # if wandb.run is None:
+        #     wandb.init(
+        #         project=getattr(self.args, 'wandb_project', 'fl_simulation'),
+        #         group=getattr(self.args, 'wandb_group', 'experiment_1'),
+        #         name=f"client_{self.cid}",
+        #         job_type="client_train",
+        #         config=vars(self.args),
+        #         reinit=True
+        #     )
 
         if hparams:
             for k, v in hparams.items():
                 setattr(self.args, k, v)
-            wandb.config.update(hparams, allow_val_change=True)
+            # wandb.config.update(hparams, allow_val_change=True)
 
         self.model = None
 
@@ -62,16 +63,20 @@ class ClientLearning:
 
         train_loader, val_loader = self._load_data(shuffle=True)
 
-        mkdir_if_not_exists(f'etc/TimeVAE/loc/ckpt/')
-        mkdir_if_not_exists(f'etc/TimeVAE/loc/logs/')
+        mkdir_if_not_exists(f'etc/TimeVAE/{self.args.loc}/ckpt/')
+        mkdir_if_not_exists(f'etc/TimeVAE/{self.args.loc}/logs/')
 
-        if os.path.exists(f'etc/TimeVAE/loc/ckpt/{self.cid}-latent_dim_{latent_dim}.pth'):
+        if os.path.exists(f'etc/TimeVAE/{self.args.loc}/ckpt/{self.cid}-latent_dim_{latent_dim}.pth'):
             log(INFO, f"{self.cid}'s TimeVAE model found. Loading state dict")
-            timevae.load_state_dict(T.load(f'etc/TimeVAE/loc/ckpt/{self.cid}-latent_dim_{latent_dim}.pth', map_location=self.args.device))
+            timevae.load_state_dict(T.load(f'etc/TimeVAE/{self.args.loc}/ckpt/{self.cid}-latent_dim_{latent_dim}.pth', map_location=self.args.device))
         else:
             log(INFO, f"{self.cid}'s TimeVAE model for latent dim {latent_dim} not found. Training client's model")
-            timevae = timevae.fit_timevae(timevae, train_loader, val_loader, epochs)
-            T.save(timevae.state_dict(), f'etc/TimeVAE/loc/ckpt/{self.cid}-latent_dim_{latent_dim}.pth')
+            timevae, train_val_log = self.fit_timevae(timevae, train_loader, val_loader, epochs)
+            T.save(timevae.state_dict(), f'etc/TimeVAE/{self.args.loc}/ckpt/{self.cid}-latent_dim_{latent_dim}.pth')
+
+            with open(f'etc/TimeVAE/{self.args.loc}/logs/{self.cid}-latent_dim-{latent_dim}-train_val.pkl', "wb") as f:
+                pickle.dump(train_val_log, f)
+                log(INFO, f"TimeVAE training log saved on etc/TimeVAE/{self.args.loc}/logs/{self.cid}-latent_dim-{latent_dim}-train_val.pkl")
 
         timevae.eval()
         latent_vectors = []
@@ -79,7 +84,9 @@ class ClientLearning:
         with T.no_grad():
             for X, _ in train_loader:
                 X = X.to(self.args.device)
-                z_mean, _ = timevae.encoder(X)
+                X = X.reshape(X.size(0), X.size(1), X.size(2))
+
+                z_mean, _, _ = timevae.encoder(X)
                 latent_vectors.append(z_mean.cpu())
 
         all_latents = T.cat(latent_vectors, dim=0)
@@ -88,8 +95,8 @@ class ClientLearning:
         return client_signature
 
     def fit_timevae(self, timevae: nn.Module, train_loader: DataLoader, val_loader: DataLoader, epochs: int=8):
-        timevae = self.train_timevae(timevae, train_loader, val_loader, epochs)
-        return timevae
+        timevae, train_val_log = self.train_timevae(timevae, train_loader, val_loader, epochs)
+        return timevae, train_val_log
 
     def _get_reconstruction_loss(self, X, X_recons):
         def get_reconst_loss_by_axis(X, X_recons, dim):
@@ -115,60 +122,76 @@ class ClientLearning:
 
 
     def train_timevae(self, model: nn.Module, train_loader, val_loader, max_epochs):
-        optimizer = T.optim.Adam(model.parameters(), lr=1e-3)
+        timevae_loss_dict = defaultdict(list)
+        optimizer = T.optim.AdamW(model.parameters(), lr=1e-3)
         scheduler = T.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, min_lr=1e-5)
         best_val_loss = np.inf
         best_model = None
-        for epoch in range(max_epochs):
+        with tqdm(total=max_epochs, desc=f"Training {self.cid}'s TimeVAE model") as pbar:
             model.train()
             model.to(self.args.device)
-            total_loss = 0
-            reconstruction_loss = 0
-            kl_loss = 0
+            total_loss = []
+            reconstruction_loss = []
+            kl_loss = []
 
             for X, y in train_loader:
                 X, y = X.to(self.args.device), y.to(self.args.device)
+                X = X.reshape(X.size(0), X.size(1), X.size(2))
                 optimizer.zero_grad()
                 z_mean, z_log_var, z = model.encoder(X)
                 reconstruction = model.decoder(z)
                 loss, recon_loss, kl = self.loss_function(X, reconstruction, z_mean, z_log_var)
-                loss /= len(train_loader)
-                recon_loss /= len(train_loader)
-                kl /= len(train_loader)
+                loss = loss / X.size(0)
+                recon_loss = recon_loss / X.size(0)
+                kl = kl / X.size(0)
 
                 loss.backward()
                 optimizer.step()
 
-                total_loss += loss.item()
-                reconstruction_loss += recon_loss.item()
-                kl_loss += kl.item()
+                total_loss.append(loss.item())
+                reconstruction_loss.append(recon_loss.item())
+                kl_loss.append(kl.item())
 
-            avg_val_loss = self.test_timevae(model, val_loader)
-            scheduler.step(avg_val_loss)
-            if avg_val_loss < best_val_loss:
-                best_val_loss = avg_val_loss
+            val_loss, val_reconstruction_loss, val_kl_loss = self.test_timevae(model, val_loader)
+            timevae_loss_dict["train_total_loss"].append(np.mean(total_loss))
+            timevae_loss_dict["train_reconstruction_loss"].append(np.mean(reconstruction_loss))
+            timevae_loss_dict["train_kl_loss"].append(np.mean(kl_loss))
+            timevae_loss_dict["val_total_loss"].append(val_loss)
+            timevae_loss_dict["val_reconstruction_loss"].append(val_reconstruction_loss)
+            timevae_loss_dict["val_kl_loss"].append(val_kl_loss)
+
+            scheduler.step(val_loss)
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
                 best_model = copy.deepcopy(model)
-            log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{max_epochs}  | Total loss: {total_loss / len(train_loader):.4f} | "
-                  f"Recon loss: {reconstruction_loss / len(train_loader):.4f} | "
-                  f"KL loss: {kl_loss / len(train_loader):.4f}")
-        return best_model
+            pbar.set_postfix({'loss': round(val_loss, 4),
+                              'recon_loss': round(val_reconstruction_loss, 4),
+                              'kl_loss': round(val_kl_loss, 4)})
+            pbar.update()
+        return best_model, timevae_loss_dict
 
     def test_timevae(self, model, val_loader):
         model.to(self.args.device)
         model.eval()
-        val_loss_sum = 0
+
+        total_loss = []
+        reconstruction_loss = []
+        kl_loss = []
+
         with T.no_grad():
             for X, y in val_loader:
                 X, y = X.to(self.args.device), y.to(self.args.device)
+                X = X.reshape(X.size(0), X.size(1), X.size(2))
                 z_mean, z_log_var, z = model.encoder(X)
                 reconstruction = model.decoder(z)
                 loss, recon_loss, kl = self.loss_function(X, reconstruction, z_mean, z_log_var)
-                loss /= len(val_loader)
-                recon_loss /= len(val_loader)
-                kl /= len(val_loader)
-                val_loss_sum += loss.item()
-        avg_val_loss = val_loss_sum / len(val_loader)
-        return avg_val_loss
+                loss = loss / X.size(0)
+                recon_loss = recon_loss / X.size(0)
+                kl = kl / X.size(0)
+                total_loss.append(loss.item())
+                reconstruction_loss.append(recon_loss.item())
+                kl_loss.append(kl.item())
+        return np.mean(total_loss), np.mean(reconstruction_loss), np.mean(kl_loss)
 
     def prepare_model(self, params=None):
         from src.utils.functions import get_model
@@ -351,14 +374,14 @@ class ClientLearning:
                                                                               criterion, device)
             val_loss, val_mse, val_rmse, val_mae, val_mape, val_r2, val_nrmse, mean_pinball, y_true_val, y_pred_val = self.test(model, val_loader, criterion, device)
             log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{epochs} | [Train]: loss {train_loss:.6f}, MSE: {train_mse:.6f} | [Val]: loss {val_loss:.6f}, MSE: {val_mse:.6f}")
-            wandb.log({
-                "client/train_loss": train_loss,
-                "client/val_loss": val_loss,
-                "client/train_rmse": train_rmse,
-                "client/val_rmse": val_rmse,
-                "client/epoch": epoch + 1,
-                "client/lr": lr
-            })
+            # wandb.log({
+            #     "client/train_loss": train_loss,
+            #     "client/val_loss": val_loss,
+            #     "client/train_rmse": train_rmse,
+            #     "client/val_rmse": val_rmse,
+            #     "client/epoch": epoch + 1,
+            #     "client/lr": lr
+            # })
             self._log_prediction_slider(y_true_val, y_pred_val, epoch + 1)
             train_loss_history.append(train_mse)
             train_rmse_history.append(train_rmse)
@@ -410,10 +433,10 @@ class ClientLearning:
         ax.legend(loc="upper right")
         ax.grid(True, linestyle=':', alpha=0.6)
 
-        wandb.log({
-            "client/prediction_chart": wandb.Image(fig),
-            "client/epoch": epoch
-        })
+        # wandb.log({
+        #     "client/prediction_chart": wandb.Image(fig),
+        #     "client/epoch": epoch
+        # })
         plt.close(fig)
 
 

@@ -19,20 +19,20 @@ class FLServerState:
         self.global_model = None
         self.global_weights = None
         self.wandb_config = wandb_config or {}
-        wandb.init(
-            project=self.wandb_config.get('project', 'fl_simulation'),
-            group=self.wandb_config.get('group', 'experiment_1'),
-            name="server_orchestrator",
-            job_type="server",
-            config={
-                "strategy": str(selection_strategy),
-                "aggregation": str(aggr_strategy),
-                "clients_per_round": clients_per_round,
-                "required_clients": required_clients,
-                "max_rounds": max_rounds
-            },
-            reinit=True
-        )
+        # wandb.init(
+        #     project=self.wandb_config.get('project', 'fl_simulation'),
+        #     group=self.wandb_config.get('group', 'experiment_1'),
+        #     name="server_orchestrator",
+        #     job_type="server",
+        #     config={
+        #         "strategy": str(selection_strategy),
+        #         "aggregation": str(aggr_strategy),
+        #         "clients_per_round": clients_per_round,
+        #         "required_clients": required_clients,
+        #         "max_rounds": max_rounds
+        #     },
+        #     reinit=True
+        # )
         self.phase = "WAITING_CLIENTS" # WAITING_CLIENTS, INITIAL_EVAL, TRAINING, GLOBAL_EVAL
         self.selection_strategy = selection_strategy
         self.aggr_strategy = aggr_strategy
@@ -176,6 +176,7 @@ class FLServerState:
                 req_latent_space = (self.phase == "INITIAL_EVAL" and "TimeVAE" in type(self.selection_strategy).__name__)
 
                 return "evaluate", {
+                    "phase": self.phase,
                     "architecture": self.global_model,
                     "weights": self.global_weights,
                     "req_latent_space": req_latent_space
@@ -228,7 +229,7 @@ class FLServerState:
         for metric_name, metric_val in _weighted_metrics.items():
             log_dict[f"server/global_{metric_name}"] = metric_val
 
-        wandb.log(log_dict)
+        # wandb.log(log_dict)
 
     def receive_test(self, client_id, results):
         if client_id not in self.tests_received:
@@ -372,7 +373,7 @@ class FLServerState:
 
         self.phase = "TRAINING"
 
-        wandb.log(selection_log)
+        # wandb.log(selection_log)
 
         log(INFO, f"Starting round {self.current_round}...")
         log(INFO, f"Clients selected: {self.selected_clients}")

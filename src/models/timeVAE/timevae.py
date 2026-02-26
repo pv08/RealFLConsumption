@@ -1,6 +1,6 @@
 import torch.nn as nn
-from inner_layers import Sampling
-from encoder_decoder import TimeVAEEncoder, TimeVAEDecoder
+from src.models.timeVAE.inner_layers import Sampling
+from src.models.timeVAE.encoder_decoder import TimeVAEEncoder, TimeVAEDecoder
 
 
 class TimeVAE(nn.Module):
@@ -23,7 +23,6 @@ class TimeVAE(nn.Module):
 
 
     def forward(self, X):
-        X = X.reshape(X.size(0), X.size(1), X.size(2))
         z_mean, z_log_var, z = self.encoder(X)
         x_decoded = self.decoder(z_mean)
-        return x_decoded
+        return z_mean, z_log_var, z, x_decoded
