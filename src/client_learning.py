@@ -1,3 +1,4 @@
+import os
 import pickle
 import random
 import copy
@@ -13,7 +14,8 @@ from typing import List, Optional, Union, Any, Dict
 from logging import INFO, DEBUG
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score, mean_pinball_loss
 from collections import OrderedDict
-from src.utils.functions import inverse_transform_test
+from src.models.timeVAE.timevae import TimeVAE
+from src.utils.functions import inverse_transform_test, mkdir_if_not_exists
 from src.utils.logger import log
 from src.data import LocalFileDataset
 from src.utils.early_stopping import EarlyStopping
@@ -51,6 +53,123 @@ class ClientLearning:
 
         self.model = None
 
+    def get_latent_space(self, latent_dim: int=8, epochs: int=8):
+        from src.models.timeVAE.timevae import TimeVAE
+        timevae = TimeVAE(hidden_sizes=self.args.hidden_dims, trend_poly=self.args.trend_poly,
+                          custom_seats=self.args.custom_seats,
+                          use_residual_conn=self.args.use_residual_conn, seq_len=self.args.num_lags,
+                          feat_dim=self.input_dim, latent_dim=latent_dim, device=self.args.device)
+
+        train_loader, val_loader = self._load_data(shuffle=True)
+
+        mkdir_if_not_exists(f'etc/TimeVAE/loc/ckpt/')
+        mkdir_if_not_exists(f'etc/TimeVAE/loc/logs/')
+
+        if os.path.exists(f'etc/TimeVAE/loc/ckpt/{self.cid}-latent_dim_{latent_dim}.pth'):
+            log(INFO, f"{self.cid}'s TimeVAE model found. Loading state dict")
+            timevae.load_state_dict(T.load(f'etc/TimeVAE/loc/ckpt/{self.cid}-latent_dim_{latent_dim}.pth', map_location=self.args.device))
+        else:
+            log(INFO, f"{self.cid}'s TimeVAE model for latent dim {latent_dim} not found. Training client's model")
+            timevae = timevae.fit_timevae(timevae, train_loader, val_loader, epochs)
+            T.save(timevae.state_dict(), f'etc/TimeVAE/loc/ckpt/{self.cid}-latent_dim_{latent_dim}.pth')
+
+        timevae.eval()
+        latent_vectors = []
+
+        with T.no_grad():
+            for X, _ in train_loader:
+                X = X.to(self.args.device)
+                z_mean, _ = timevae.encoder(X)
+                latent_vectors.append(z_mean.cpu())
+
+        all_latents = T.cat(latent_vectors, dim=0)
+        client_signature = all_latents.mean(dim=0).numpy()
+
+        return client_signature
+
+    def fit_timevae(self, timevae: nn.Module, train_loader: DataLoader, val_loader: DataLoader, epochs: int=8):
+        timevae = self.train_timevae(timevae, train_loader, val_loader, epochs)
+        return timevae
+
+    def _get_reconstruction_loss(self, X, X_recons):
+        def get_reconst_loss_by_axis(X, X_recons, dim):
+            x_r = T.mean(X, dim=dim)
+            x_c_r = T.mean(X_recons, dim=dim)
+            err = T.pow(x_r - x_c_r, 2)
+            loss = T.sum(err)
+            return loss
+
+        err = T.pow(X - X_recons, 2)
+        reconst_loss = T.sum(err)
+
+        reconst_loss += get_reconst_loss_by_axis(X, X_recons, dim=2)  # by time axis
+        reconst_loss += get_reconst_loss_by_axis(X, X_recons, dim=1)  # by feature axis
+
+        return reconst_loss
+
+    def loss_function(self, X, X_recons, z_mean, z_log_var):
+        reconstruction_loss = self._get_reconstruction_loss(X, X_recons)
+        kl_loss = -0.5 * T.sum(1 + z_log_var - z_mean.pow(2) - z_log_var.exp())
+        total_loss = self.args.reconstruction_wt * reconstruction_loss + kl_loss
+        return total_loss, reconstruction_loss, kl_loss
+
+
+    def train_timevae(self, model: nn.Module, train_loader, val_loader, max_epochs):
+        optimizer = T.optim.Adam(model.parameters(), lr=1e-3)
+        scheduler = T.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, min_lr=1e-5)
+        best_val_loss = np.inf
+        best_model = None
+        for epoch in range(max_epochs):
+            model.train()
+            model.to(self.args.device)
+            total_loss = 0
+            reconstruction_loss = 0
+            kl_loss = 0
+
+            for X, y in train_loader:
+                X, y = X.to(self.args.device), y.to(self.args.device)
+                optimizer.zero_grad()
+                z_mean, z_log_var, z = model.encoder(X)
+                reconstruction = model.decoder(z)
+                loss, recon_loss, kl = self.loss_function(X, reconstruction, z_mean, z_log_var)
+                loss /= len(train_loader)
+                recon_loss /= len(train_loader)
+                kl /= len(train_loader)
+
+                loss.backward()
+                optimizer.step()
+
+                total_loss += loss.item()
+                reconstruction_loss += recon_loss.item()
+                kl_loss += kl.item()
+
+            avg_val_loss = self.test_timevae(model, val_loader)
+            scheduler.step(avg_val_loss)
+            if avg_val_loss < best_val_loss:
+                best_val_loss = avg_val_loss
+                best_model = copy.deepcopy(model)
+            log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{max_epochs}  | Total loss: {total_loss / len(train_loader):.4f} | "
+                  f"Recon loss: {reconstruction_loss / len(train_loader):.4f} | "
+                  f"KL loss: {kl_loss / len(train_loader):.4f}")
+        return best_model
+
+    def test_timevae(self, model, val_loader):
+        model.to(self.args.device)
+        model.eval()
+        val_loss_sum = 0
+        with T.no_grad():
+            for X, y in val_loader:
+                X, y = X.to(self.args.device), y.to(self.args.device)
+                z_mean, z_log_var, z = model.encoder(X)
+                reconstruction = model.decoder(z)
+                loss, recon_loss, kl = self.loss_function(X, reconstruction, z_mean, z_log_var)
+                loss /= len(val_loader)
+                recon_loss /= len(val_loader)
+                kl /= len(val_loader)
+                val_loss_sum += loss.item()
+        avg_val_loss = val_loss_sum / len(val_loader)
+        return avg_val_loss
+
     def prepare_model(self, params=None):
         from src.utils.functions import get_model
         self.model = get_model(device=self.args.device, model=self.args.model_name, input_dim=self.input_dim,
@@ -68,9 +187,9 @@ class ClientLearning:
             T.cuda.empty_cache()
         gc.collect()
 
-    def _load_data(self):
-        train_loader = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
-        val_loader = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers, pin_memory=True)
+    def _load_data(self, shuffle: bool=False):
+        train_loader = DataLoader(self.train_dataset, batch_size=self.args.batch_size, shuffle=shuffle, num_workers=self.args.num_workers, pin_memory=True)
+        val_loader = DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=shuffle, num_workers=self.args.num_workers, pin_memory=True)
         return train_loader, val_loader
 
 

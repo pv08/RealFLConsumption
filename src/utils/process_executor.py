@@ -20,13 +20,17 @@ def _train_wrapper(queue, args, params, hparams):
         queue.put({"status": "error", "message": str(e) + "\n" + traceback.format_exc()})
 
 
-def _evaluate_wrapper(queue, args, params):
+def _evaluate_wrapper(queue, args, params, req_latent_space):
     try:
         from src.client_learning import ClientLearning
         trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
 
         num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=params, method="test")
-        queue.put({"status": "success", "result": (num_test_instances, test_loss, test_eval_metrics)})
+        latent_space = None
+        if req_latent_space:
+            log(INFO, f"Server requested {args.filter_bs}'s latent space to cluster")
+            latent_space = trainer.get_latent_space(args.latent_dim, args.timevae_epochs)
+        queue.put({"status": "success", "result": (num_test_instances, test_loss, test_eval_metrics, latent_space)})
     except Exception as e:
         queue.put({"status": "error", "message": str(e) + "\n" + traceback.format_exc()})
 
@@ -55,13 +59,13 @@ class ProcessExecutor:
         return response["result"]
 
     @staticmethod
-    def run_evaluate(args, params):
+    def run_evaluate(args, params, req_latent_space):
         ctx = mp.get_context('spawn')
         queue = ctx.Queue()
 
         p = ctx.Process(
             target=_evaluate_wrapper,
-            args=(queue, args, params)
+            args=(queue, args, params, req_latent_space)
         )
         p.start()
         try:

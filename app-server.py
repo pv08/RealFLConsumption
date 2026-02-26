@@ -2,9 +2,10 @@ import selectors
 import socket
 import traceback
 import os
+from typing import Optional
 from logging import INFO, ERROR, WARNING
 from src.comm import libserver
-from src.base.selection_strategy import RandomSelection
+from src.base.selection_strategy import RandomSelection, TimeVAE, TimeVAEWeeklyRepresentativeSelection
 from src.base.aggregation_strategy import Aggregator
 from src.fl_manager import FLServerState
 from src.utils.logger import log
@@ -21,12 +22,23 @@ def accept_wrapper(sock, fl_state):
     message = libserver.Message(sel, conn, addr, fl_state)
     sel.register(conn, selectors.EVENT_READ, data=message)
 
+def get_select_strategy(strategy: str="random", cluster_size: Optional[int]=None):
+    if strategy == "random":
+        return RandomSelection()
+    elif strategy == "fixed-representativeness" and cluster_size is not None:
+        return TimeVAE(min_cluster_size=cluster_size)
+    elif strategy == "weekly-representativeness" and cluster_size is not None:
+        return TimeVAEWeeklyRepresentativeSelection(min_cluster_size=cluster_size)
+    else:
+        raise KeyError(f"Please, select a client selection strategy valid. {strategy} do not exists. Valid options: ['random', 'fixed-representativeness', 'weekly-representativeness']")
 
 
 def main():
     parser = ArgumentParser()
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
+    parser.add_argument('--client_strategy', type=str, default='random', help="['random', 'fixed-representativeness', 'weekly-representativeness']")
+    parser.add_argument('--min_cluster_size', type=int, default=None)
     parser.add_argument('--clients_per_round', type=int, default=1)
     parser.add_argument('--optimize_clients', action='store_true')
     parser.add_argument('--required_clients', type=int, default=1)
@@ -38,7 +50,7 @@ def main():
     args = parser.parse_args()
     print(args)
     host, port = args.host, args.port
-    strategy = RandomSelection()
+    strategy = get_select_strategy(strategy=args.client_strategy, cluster_size=args.min_cluster_size)
     aggregation = Aggregator(aggregation_alg=args.aggregation)
     wandb_config = {
         'project': args.wandb_project,
