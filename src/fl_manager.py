@@ -91,7 +91,7 @@ class FLServerState:
         # Definimos o espaço de busca
         hparams = {
             "lr": trial.suggest_float("lr", 1e-5, 1e-2, log=True),
-            "batch_size": trial.suggest_categorical("batch_size", [8, 16, 32, 64, 128, 256, 512, 1024]),
+            "batch_size": trial.suggest_categorical("batch_size", [64, 128, 256, 512, 1024]),
             "optimizer": trial.suggest_categorical("optimizer", ["adam", "adamw", "sgd"])
         }
 
@@ -173,7 +173,13 @@ class FLServerState:
 
         if self.phase in ["INITIAL_EVAL", "GLOBAL_EVAL"]:
             if client_id not in self.evaluations_received:
-                return "evaluate", {"architecture": self.global_model, "weights": self.global_weights}
+                req_latent_space = (self.phase == "INITIAL_EVAL" and "TimeVAE" in type(self.selection_strategy).__name__)
+
+                return "evaluate", {
+                    "architecture": self.global_model,
+                    "weights": self.global_weights,
+                    "req_latent_space": req_latent_space
+                }
             else:
                 self._add_to_waitlist(message_obj)
                 return "defer", None
@@ -240,6 +246,11 @@ class FLServerState:
                 log(INFO, f"Simulation testing saved on etc/fl/results/{self.model_name}/global_model_cids_tests.pkl")
 
     def receive_metrics(self, client_id, metrics):
+        if metrics["latent_space"] is not None:
+            latent_space = metrics.pop("latent_space")
+            if client_id in self.registered_clients:
+                self.registered_clients[client_id]["latent_space"] = latent_space
+
         if client_id not in self.evaluations_received:
             self.evaluations_received[client_id] = metrics
             log(INFO, f"Metrics from client {client_id} on fase {self.phase}: {metrics} ")

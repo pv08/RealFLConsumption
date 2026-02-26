@@ -84,7 +84,7 @@ def main():
     parser.add_argument("--y_scaler", type=str, default='minmax')
     parser.add_argument("--outlier_detection", type=any, default=None)
 
-    # 3. Model args
+    # 3. Regression Model args
     parser.add_argument("--criterion", type=str, default='mse')
     parser.add_argument("--model_name", type=str, default='lstm', help='["mlp", "rnn" ,"lstm", "gru", "cnn", "da_encoder_decoder"]')
     parser.add_argument("--epochs", type=int, default=1)
@@ -99,7 +99,16 @@ def main():
     parser.add_argument("--reg2", type=float, default=0.0)
     parser.add_argument("--patience", type=int, default=50)
 
-    # 4. Device args
+    # 4. TimeVAE model args
+    parser.add_argument("--latent_dim", type=int, default=8)
+    parser.add_argument("--timevae_epochs", type=int, default=200)
+    parser.add_argument('--custom_seats', type=any, default=None)
+    parser.add_argument('--hidden_dims', type=list, default=[128, 256, 512])
+    parser.add_argument('--trend_poly', type=int, default=0)
+    parser.add_argument('--reconstruction_wt', type=float, default=3.0)
+    parser.add_argument('--use_residual_conn', type='store_true')
+
+    # 5. Device args
     parser.add_argument("--gpu_slots", type=int, default=1)
     parser.add_argument("--cuda", type=bool, default=T.cuda.is_available())
     parser.add_argument("--seed", type=int, default=0)
@@ -149,15 +158,19 @@ def main():
 
             elif action == "evaluate":
                 log(INFO, f"Evaluating global model at {resp.get('phase', 'N/A')} phase")
+
+                req_latent_space = data.get("req_latent_space", False)
+
                 global_model_params = data["weights"]
                 with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
-                    num_test_instances, test_loss, test_eval_metrics = ProcessExecutor.run_evaluate(
+                    num_test_instances, test_loss, test_eval_metrics, latent_space = ProcessExecutor.run_evaluate(
                         args=args,
-                        params=global_model_params
+                        params=global_model_params,
+                        req_latent_space=req_latent_space
                     )
 
                 req_m = create_request("send_metrics", {"client_id": args.filter_bs, "value": {"instances": num_test_instances, "loss": test_loss,
-                                                                                                 "metrics": test_eval_metrics}})
+                                                                                                 "metrics": test_eval_metrics, "latent_space": latent_space}})
                 send_and_wait(host, port, req_m)
 
             elif action == "train":
