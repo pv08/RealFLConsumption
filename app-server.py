@@ -38,7 +38,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
-    parser.add_argument('--client_strategy', type=str, default='fixed-representativeness', help="['random', 'fixed-representativeness', 'weekly-representativeness']")
+    parser.add_argument('--client_strategy', type=str, default='random', help="['random', 'fixed-representativeness', 'weekly-representativeness']")
     parser.add_argument('--min_cluster_size', type=int, default=2)
     parser.add_argument('--clients_per_round', type=int, default=5)
     parser.add_argument('--optimize_clients', action='store_true')
