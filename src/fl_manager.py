@@ -8,9 +8,8 @@ import wandb
 from collections import defaultdict
 from logging import INFO, WARNING
 from typing import List, Dict, Tuple
-from twilio.rest import Client
 from collections import OrderedDict
-from src.utils.functions import mkdir_if_not_exists, get_model
+from src.utils.functions import mkdir_if_not_exists, get_model, seed_all
 from src.structure.blockchain import Blockchain
 from src.utils.logger import log
 

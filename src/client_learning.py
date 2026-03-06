@@ -16,7 +16,7 @@ from logging import INFO, DEBUG
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score, mean_pinball_loss
 from collections import OrderedDict, defaultdict
 from src.models.timeVAE.timevae import TimeVAE
-from src.utils.functions import inverse_transform_test, mkdir_if_not_exists
+from src.utils.functions import inverse_transform_test, mkdir_if_not_exists, seed_all
 from src.utils.logger import log
 from src.data import LocalFileDataset
 from src.utils.early_stopping import EarlyStopping
@@ -25,8 +25,6 @@ class ClientLearning:
     def __init__(self, args, cid, seed: int, hparams: Optional[dict]=None):
         self.args = args
         self.cid = cid
-        self.seed_all(seed)
-
         with open(f"{self.args.data_path}/{self.args.filter_bs}_metadata.pkl", "rb") as f:
             _meta_doc =  pickle.load(f)
 
@@ -504,13 +502,3 @@ class ClientLearning:
             if return_all:
                 return mse, rmse, mae, mape, r2, nrmse, mean_pinball, res
         return mse, rmse, mae, mape, r2, nrmse, mean_pinball
-
-
-    def seed_all(self, seed: int = 0):
-        random.seed(seed)
-        np.random.seed(seed)
-        T.manual_seed(seed)
-        T.cuda.manual_seed_all(seed)
-        T.use_deterministic_algorithms(True)
-        T.backends.cudnn.deterministic = True
-        T.backends.cudnn.benchmark = False

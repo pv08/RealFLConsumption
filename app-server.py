@@ -9,6 +9,7 @@ from src.base.selection_strategy import RandomSelection, TimeVAE, TimeVAEWeeklyR
 from src.base.aggregation_strategy import Aggregator
 from src.fl_manager import FLServerState
 from src.utils.logger import log
+from src.utils.functions import seed_all
 from argparse import ArgumentParser
 
 
@@ -38,18 +39,20 @@ def main():
     parser.add_argument('--host', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=65432)
     parser.add_argument('--client_strategy', type=str, default='fixed-representativeness', help="['random', 'fixed-representativeness', 'weekly-representativeness']")
-    parser.add_argument('--min_cluster_size', type=int, default=1)
-    parser.add_argument('--clients_per_round', type=int, default=1)
+    parser.add_argument('--min_cluster_size', type=int, default=2)
+    parser.add_argument('--clients_per_round', type=int, default=5)
     parser.add_argument('--optimize_clients', action='store_true')
-    parser.add_argument('--required_clients', type=int, default=1)
+    parser.add_argument('--required_clients', type=int, default=5)
     parser.add_argument('--max_rounds', type=int, default=2)
     parser.add_argument("--aggregation", type=str, default="fedavg")
     parser.add_argument('--wandb_project', type=str, default=os.getenv('WANDB_PROJECT', 'fl_default'))
     parser.add_argument('--wandb_group', type=str, default=os.getenv('WANDB_GROUP', 'default_group'))
+    parser.add_argument('--seed', type=int, default=0)
 
     args = parser.parse_args()
     print(args)
     host, port = args.host, args.port
+    seed_all(args.seed)
     strategy = get_select_strategy(strategy=args.client_strategy, cluster_size=args.min_cluster_size)
     aggregation = Aggregator(aggregation_alg=args.aggregation)
     wandb_config = {

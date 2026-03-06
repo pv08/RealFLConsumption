@@ -5,7 +5,7 @@ import torch as T
 import time
 from logging import INFO, WARNING, ERROR
 from src.comm import libclient
-from src.utils.functions import make_default_dirs, mkdir_if_not_exists
+from src.utils.functions import seed_all
 from src.utils.logger import log
 from src.utils.gpu_lock import GPULock
 from src.utils.process_executor import ProcessExecutor
@@ -100,10 +100,10 @@ def main():
     parser.add_argument("--patience", type=int, default=50)
 
     # 4. TimeVAE model args
-    parser.add_argument("--latent_dim", type=int, default=96)
-    parser.add_argument("--timevae_epochs", type=int, default=200)
+    parser.add_argument("--latent_dim", type=int, default=8)
+    parser.add_argument("--timevae_epochs", type=int, default=1)
     parser.add_argument('--custom_seats', type=any, default=None)
-    parser.add_argument('--hidden_dims', type=list, default=[128, 256, 512])
+    parser.add_argument('--hidden_dims', type=list, default=[2, 4, 8])
     parser.add_argument('--trend_poly', type=int, default=0)
     parser.add_argument('--reconstruction_wt', type=float, default=3.0)
     parser.add_argument('--use_residual_conn', action='store_true')
@@ -119,6 +119,7 @@ def main():
 
     host, port = args.host, args.port
     socket.setdefaulttimeout(3600)
+    seed_all(args.seed)
     trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
     log(INFO, f"Client {args.filter_bs} initiated -> {args}.")
 
@@ -203,7 +204,7 @@ def main():
 
                 end_time = time.time()
                 training_time = end_time - start_time
-                log(INFO,f"Time spent to train client {args.filter_bs} {training_time} seconds --> {(training_time) / 3600} hours")
+                log(INFO,f"Time spent to train client {args.filter_bs} {training_time} seconds --> {training_time / 3600} hours")
                 res += (training_time, )
 
                 trainer.clean_up()
