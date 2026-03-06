@@ -3,7 +3,9 @@ import pandas as pd
 import os
 import json
 import numpy as np
+import torch as T
 import glob
+import random
 from typing import Dict, List
 from logging import INFO
 from datetime import datetime
@@ -12,6 +14,16 @@ from src.models.rnn import RNN
 from src.models.lstm import LSTM
 from src.models.gru import GRU
 from src.models.cnn import CNN
+
+
+def seed_all(seed: int = 0):
+    random.seed(seed)
+    np.random.seed(seed)
+    T.manual_seed(seed)
+    T.cuda.manual_seed_all(seed)
+    T.use_deterministic_algorithms(True)
+    T.backends.cudnn.deterministic = True
+    T.backends.cudnn.benchmark = False
 
 
 def get_available_clients_location(loc: str="austin"):
