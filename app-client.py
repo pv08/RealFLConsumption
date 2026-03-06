@@ -163,16 +163,16 @@ def main():
                 req_latent_space = data.get("req_latent_space", False)
 
                 global_model_params = data["weights"]
-                # with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
-                #     num_test_instances, test_loss, test_eval_metrics, latent_space = ProcessExecutor.run_evaluate(
-                #         args=args,
-                #         params=global_model_params,
-                #         req_latent_space=req_latent_space
-                #     )
+                with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
+                    num_test_instances, test_loss, test_eval_metrics, latent_space = ProcessExecutor.run_evaluate(
+                        args=args,
+                        params=global_model_params,
+                        req_latent_space=req_latent_space
+                    )
 
-                trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
-
-                num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
+                # trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
+                #
+                # num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
                 latent_space = None
                 if req_latent_space:
                     log(INFO, f"Server requested {args.filter_bs}'s latent space to cluster")
@@ -183,24 +183,24 @@ def main():
                 send_and_wait(host, port, req_m)
 
             elif action == "train":
-                # setattr(args, 'wandb_project', args.wandb_project)
-                # setattr(args, 'wandb_group', args.wandb_group)
+                setattr(args, 'wandb_project', args.wandb_project)
+                setattr(args, 'wandb_group', args.wandb_group)
                 start_time = time.time()
                 log(INFO, f"Starting training...")
                 global_model_params = data["weights"]
                 client_hparams = data.get("hparams", {})
                 log(INFO, f"Hyperparameters received from Server: {client_hparams}")
-                # with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
-                #     res = ProcessExecutor.run_train(
-                #         args=args,
-                #         params=global_model_params,
-                #         hparams=client_hparams
-                #     )
-                trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed, hparams=client_hparams)
-
-                res = trainer.fit(params=global_model_params, criterion=args.criterion,
-                                  optimizer=args.optimizer, early_stopping=args.early_stopping,
-                                  patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
+                with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
+                    res = ProcessExecutor.run_train(
+                        args=args,
+                        params=global_model_params,
+                        hparams=client_hparams
+                    )
+                # trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed, hparams=client_hparams)
+                #
+                # res = trainer.fit(params=global_model_params, criterion=args.criterion,
+                #                   optimizer=args.optimizer, early_stopping=args.early_stopping,
+                #                   patience=args.patience, lr=args.lr, epochs=args.epochs, device=args.device)
 
                 end_time = time.time()
                 training_time = end_time - start_time
