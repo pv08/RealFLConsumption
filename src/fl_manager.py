@@ -14,10 +14,12 @@ from src.structure.blockchain import Blockchain
 from src.utils.logger import log
 
 class FLServerState:
-    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True, wandb_config: dict=None):
+    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True, wandb_config: dict=None, seed: int=0):
         self.global_model = None
         self.global_weights = None
         self.wandb_config = wandb_config or {}
+        self.seed = seed
+        seed_all(self.seed)
         # wandb.init(
         #     project=self.wandb_config.get('project', 'fl_simulation'),
         #     group=self.wandb_config.get('group', 'experiment_1'),
