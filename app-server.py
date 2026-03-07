@@ -52,7 +52,6 @@ def main():
     args = parser.parse_args()
     print(args)
     host, port = args.host, args.port
-    seed_all(args.seed)
     strategy = get_select_strategy(strategy=args.client_strategy, cluster_size=args.min_cluster_size)
     aggregation = Aggregator(aggregation_alg=args.aggregation)
     wandb_config = {
@@ -62,7 +61,8 @@ def main():
     fl_state = FLServerState(selection_strategy=strategy, aggr_strategy=aggregation,
                              required_clients=args.required_clients,
                              clients_per_round=args.clients_per_round,
-                             max_rounds=args.max_rounds, optimize_clients=args.optimize_clients, wandb_config=wandb_config)
+                             max_rounds=args.max_rounds, optimize_clients=args.optimize_clients,
+                             wandb_config=wandb_config, seed=args.seed)
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     lsock.bind((host, port))
