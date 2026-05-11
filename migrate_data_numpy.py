@@ -57,7 +57,7 @@ def main():
         "num_val_samples": len(X_val)
     }
 
-    with open(f"dataset/pecanstreet/15min/austin/train/{args.filter_bs}_metadata.pkl", "wb") as f:
+    with open(f"dataset/pecanstreet/15min/{args.loc}/train/{args.filter_bs}_metadata.pkl", "wb") as f:
         pickle.dump(meta_obj, f)
 
     save_batch(X_train, y_train, "train", args.filter_bs, loc=args.loc)
