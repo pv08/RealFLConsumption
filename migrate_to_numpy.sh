@@ -31,7 +31,7 @@ PUERTO_RICO_LIST=(8235 3835 7667 3987 11386 10887 6056 939 4046 11126 10826 1092
 
 case "$TARGET_LOC" in
     austin)       ID_LIST=("${AUSTIN_LIST[@]}") ;;
-    ny)           ID_LIST=("${NY_LIST[@]}") ;;
+    new_york)     ID_LIST=("${NY_LIST[@]}") ;;
     california)   ID_LIST=("${CALIFORNIA_LIST[@]}") ;;
     puerto_rico)  ID_LIST=("${PUERTO_RICO_LIST[@]}") ;;
     *)

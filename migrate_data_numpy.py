@@ -63,7 +63,7 @@ def main():
     save_batch(X_train, y_train, "train", args.filter_bs, loc=args.loc)
     save_batch(X_val, y_val, "val", args.filter_bs, loc=args.loc)
     save_batch(X_test, y_test, "test", args.filter_bs, loc=args.loc)
-    log(INFO, f"Migration for {args.filter_bs}'s data finished")
+    log(INFO, f"Migration for {args.filter_bs}'s data from {args.loc} finished")
 
 
 if "__main__" == __name__:
