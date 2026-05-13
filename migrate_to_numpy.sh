@@ -16,7 +16,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$TARGET_LOC" ]]; then
-    echo "[!] - Usage: bash $0 --loc <austin|ny|california|puerto_rico>"
+    echo "[!] - Usage: bash $0 --loc <austin|newyork|california|puertorico>"
     exit 1
 fi
 
@@ -31,11 +31,11 @@ PUERTO_RICO_LIST=(8235 3835 7667 3987 11386 10887 6056 939 4046 11126 10826 1092
 
 case "$TARGET_LOC" in
     austin)       ID_LIST=("${AUSTIN_LIST[@]}") ;;
-    new_york)     ID_LIST=("${NY_LIST[@]}") ;;
+    newyork)     ID_LIST=("${NY_LIST[@]}") ;;
     california)   ID_LIST=("${CALIFORNIA_LIST[@]}") ;;
     puerto_rico)  ID_LIST=("${PUERTO_RICO_LIST[@]}") ;;
     *)
-        echo "[!] - Unknown location '$TARGET_LOC'. Valid options: austin, ny, california, puerto_rico"
+        echo "[!] - Unknown location '$TARGET_LOC'. Valid options: austin, newyork, california, puertorico"
         exit 1
         ;;
 esac
