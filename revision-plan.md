@@ -72,7 +72,7 @@ G4 → G5 → G2 (requer código) → G3 (requer código) → G1 → G7 → G6
 - [ ] **Adicionar métricas de fairness:**
   - Histograma/boxplot da distribuição de participações por cliente
   - Taxa de cobertura: percentual de clientes que participaram em ≥1 rodada
-  - Índice de Jain: `J = (Σxᵢ)² / (n · Σxᵢ²)`, onde xᵢ = número de seleções do cliente i (J=1 é perfeitamente justo)
+  - Índice de Jain: $J = (\sum x_{i}_)^2 / (n \cdot \sum x_{i}_^2)$, onde xᵢ = número de seleções do cliente i (J=1 é perfeitamente justo)
 - [ ] **Mostrar impacto no desempenho do modelo:** comparar MSE e R² dos clientes nunca selecionados vs. selecionados, com e sem a seleção por fairness.
 - [ ] **Reposicionar as contribuições:** o artigo passa a diagnosticar *e* propor um caminho inicial de solução.
 

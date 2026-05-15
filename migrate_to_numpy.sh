@@ -33,7 +33,7 @@ case "$TARGET_LOC" in
     austin)       ID_LIST=("${AUSTIN_LIST[@]}") ;;
     newyork)     ID_LIST=("${NY_LIST[@]}") ;;
     california)   ID_LIST=("${CALIFORNIA_LIST[@]}") ;;
-    puerto_rico)  ID_LIST=("${PUERTO_RICO_LIST[@]}") ;;
+    puertorico)  ID_LIST=("${PUERTO_RICO_LIST[@]}") ;;
     *)
         echo "[!] - Unknown location '$TARGET_LOC'. Valid options: austin, newyork, california, puertorico"
         exit 1
