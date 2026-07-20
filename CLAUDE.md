@@ -150,4 +150,4 @@ These are things that will bite during new implementations — verify against th
 
 `.env` / Docker environment:
 - `WANDB_API_KEY`, `WANDB_PROJECT`, `WANDB_GROUP` — WandB integration (wired but currently disabled in code)
-- `CUDA_LAUNCH_BLOCKING`, `PYTORCH_ALLOC_CONF=expandable_segments:True`, `CUBLAS_WORKSPACE_CONFIG=:4096:8`, `OMP_NUM_THREADS`, `MALLOC_ARENA_MAX` — GPU stability/determinism knobs set in the generated Docker Compose
+- `PYTORCH_ALLOC_CONF=expandable_segments:True`, `CUBLAS_WORKSPACE_CONFIG=:4096:8`, `OMP_NUM_THREADS`, `MALLOC_ARENA_MAX` — GPU stability/determinism knobs set in the generated Docker Compose (`CUDA_LAUNCH_BLOCKING=1` is intentionally not set by default — it forces synchronous kernel launches and was killing training throughput; set it manually only when debugging an async CUDA error)
