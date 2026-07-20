@@ -14,9 +14,11 @@ from src.structure.blockchain import Blockchain
 from src.utils.logger import log
 
 class FLServerState:
-    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True, wandb_config: dict=None, seed: int=0):
+    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True, wandb_config: dict=None, seed: int=0, disable_blockchain: bool=False):
         self.global_model = None
         self.global_weights = None
+        self.disable_blockchain = disable_blockchain
+        self.ledger = None
         self.wandb_config = wandb_config or {}
         self.seed = seed
         seed_all(self.seed)
@@ -56,6 +58,9 @@ class FLServerState:
             log(WARNING, f"[Optuna] Optimizing procedure activated: all clients available will receive hparams from Optuna")
         else:
             log(WARNING, f"No optimization procedure activated. Hparams will be fixed")
+
+        if self.disable_blockchain:
+            log(WARNING, f"Blockchain ledger disabled: client updates will not be hashed or checked for duplicate/replay contributions")
         self.client_studies = {}
         self.client_active_trials = {}
 
@@ -141,7 +146,8 @@ class FLServerState:
                   lags=_tmp_obj["lags"])
         self.global_weights = [val.cpu().numpy() for _, val in self.global_model.state_dict().items()]
         self.model_name = type(self.global_model).__name__
-        self.ledger = Blockchain(log_dir=f'etc/fl/logs/{self.model_name}/')
+        if not self.disable_blockchain:
+            self.ledger = Blockchain(log_dir=f'etc/fl/logs/{self.model_name}/')
         log(INFO, f"Global model architecture defined as {type(self.global_model).__name__}")
 
     def register_client(self, client_id, message_obj):
@@ -316,7 +322,7 @@ class FLServerState:
         """Recebe pesos treinados e verifica agregação."""
         model_params, train_history, num_train, train_loss, train_metrics, val_history, num_val, val_loss, val_metrics, time_spent = client_res
 
-        if not self.ledger.add_block(client_id=client_id, model_weights=model_params):
+        if self.ledger is not None and not self.ledger.add_block(client_id=client_id, model_weights=model_params):
             log(WARNING, f"Update from {client_id} rejected by Blockchain Protocol.")
             return False
 

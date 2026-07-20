@@ -1,8 +1,8 @@
 import hashlib
 import json
-import pickle
 import time
 import os
+import numpy as np
 from logging import INFO, ERROR
 from src.utils.functions import mkdir_if_not_exists
 from src.utils.logger import log
@@ -44,8 +44,9 @@ class Blockchain:
         self.known_hashes = set()
         mkdir_if_not_exists(log_dir)
         self.log_dir = log_dir
-        self.ledger_path = os.path.join(self.log_dir, "blockchain_ledger.json")
-        self.save_ledger()
+        self.ledger_path = os.path.join(self.log_dir, "blockchain_ledger.jsonl")
+        open(self.ledger_path, "w").close()
+        self._append_block(self.chain[0])
         log(INFO, "Blockchain Ledger initialized.")
 
 
@@ -62,11 +63,12 @@ class Blockchain:
         Retorna True se sucesso, False se a contribuição for duplicada.
         """
         # 1. Calcula o hash dos dados recebidos (pesos)
-        # Convertemos os pesos (lista de numpy arrays) para bytes para hash
+        # Hash direto sobre os bytes crus de cada array, sem serializar via pickle
         try:
-            # Serialização rápida apenas para hash
-            weights_bytes = pickle.dumps(model_weights)
-            data_hash = hashlib.sha256(weights_bytes).hexdigest()
+            hasher = hashlib.sha256()
+            for arr in model_weights:
+                hasher.update(np.ascontiguousarray(arr).tobytes())
+            data_hash = hasher.hexdigest()
         except Exception as e:
             log(ERROR, f"Error hashing weights: {e}")
             return False
@@ -88,18 +90,17 @@ class Blockchain:
 
         self.chain.append(new_block)
         self.known_hashes.add(data_hash)
-        self.save_ledger()
+        self._append_block(new_block)
         log(INFO, f"Block #{new_block.index} added to ledger. Client: {client_id}")
         return True
 
-    def save_ledger(self):
-        """Escreve a cadeia inteira em um arquivo JSON."""
-        chain_data = [block.to_dict() for block in self.chain]
+    def _append_block(self, block):
+        """Acrescenta um único bloco ao ledger (JSON Lines), sem reescrever a cadeia inteira."""
         try:
-            with open(self.ledger_path, 'w') as f:
-                json.dump(chain_data, f, indent=4)
+            with open(self.ledger_path, 'a') as f:
+                f.write(json.dumps(block.to_dict()) + "\n")
         except Exception as e:
-            log(ERROR, f"Failed to save ledger: {e}")
+            log(ERROR, f"Failed to append block to ledger: {e}")
 
 
     def is_chain_valid(self):
