@@ -33,7 +33,7 @@ class Message:
 
     def _read(self):
         try:
-            data = self.sock.recv(4096)
+            data = self.sock.recv(65536)
             # log(DEBUG, data)
         except BlockingIOError:
             pass  # Buffer de entrada vazio, aguarda próxima chamada
@@ -57,7 +57,7 @@ class Message:
 
     def _pickle_encode(self, obj):
         """Serialização binária eficiente para NumPy/Dicts."""
-        return pickle.dumps(obj)
+        return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
     def _pickle_decode(self, binary_bytes):
         return pickle.loads(binary_bytes)
