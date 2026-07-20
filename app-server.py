@@ -42,6 +42,7 @@ def main():
     parser.add_argument('--min_cluster_size', type=int, default=2)
     parser.add_argument('--clients_per_round', type=int, default=5)
     parser.add_argument('--optimize_clients', action='store_true')
+    parser.add_argument('--disable_blockchain', action='store_true', help="Skip the Blockchain ledger (no per-update hashing/duplicate-replay check, no ledger file written)")
     parser.add_argument('--required_clients', type=int, default=5)
     parser.add_argument('--max_rounds', type=int, default=2)
     parser.add_argument("--aggregation", type=str, default="fedavg")
@@ -62,7 +63,8 @@ def main():
                              required_clients=args.required_clients,
                              clients_per_round=args.clients_per_round,
                              max_rounds=args.max_rounds, optimize_clients=args.optimize_clients,
-                             wandb_config=wandb_config, seed=args.seed)
+                             wandb_config=wandb_config, seed=args.seed,
+                             disable_blockchain=args.disable_blockchain)
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     lsock.bind((host, port))
