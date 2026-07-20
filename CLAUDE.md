@@ -136,4 +136,4 @@ When `--optimize_clients` is passed to the server, each client gets hyperparamet
 
 `.env` / Docker environment:
 - `WANDB_API_KEY`, `WANDB_PROJECT`, `WANDB_GROUP` — WandB integration (currently commented out in code but wired in Docker Compose)
-- `CUDA_LAUNCH_BLOCKING=1`, `PYTORCH_ALLOC_CONF=expandable_segments:True` — GPU stability settings used in Docker
+- `PYTORCH_ALLOC_CONF=expandable_segments:True` — GPU stability setting used in Docker (`CUDA_LAUNCH_BLOCKING=1` is intentionally not set by default — it forces synchronous kernel launches and was killing training throughput; set it manually only when debugging an async CUDA error)

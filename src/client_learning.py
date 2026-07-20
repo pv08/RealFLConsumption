@@ -300,19 +300,19 @@ class ClientLearning:
         model.to(device)
         model.eval()
         y_true, y_pred = [], []
-        loss = 0.0
+        loss_sum = T.tensor(0.0, device=device)
         with T.no_grad():
             for x, y in data:
                 x, y = x.to(device), y.to(device)
                 out = model(x)
                 if criterion is not None:
-                    loss += criterion(out, y).item()
-                y_true.extend(y)
-                y_pred.extend(out)
-        loss /= len(data.dataset)
+                    loss_sum += criterion(out, y).detach()
+                y_true.append(y)
+                y_pred.append(out)
+        loss = (loss_sum / len(data.dataset)).item()
 
-        y_true = T.stack(y_true)
-        y_pred = T.stack(y_pred)
+        y_true = T.cat(y_true, dim=0)
+        y_pred = T.cat(y_pred, dim=0)
         mse, rmse, mae, mape, r2, nrmse, mean_pinball = self.accumulate_metrics(y_true.cpu(), y_pred.cpu())
         del model
         del data
@@ -342,6 +342,7 @@ class ClientLearning:
             model.to(device)
             model.train()
             epochs_loss = []
+            y_true_train, y_pred_train = [], []
             for x, y in train_loader:
                 x, y = x.to(device), y.to(device)
                 optimizer.zero_grad()
@@ -364,12 +365,21 @@ class ClientLearning:
                     nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
 
                 optimizer.step()
-                epochs_loss.append(loss.item())
+                epochs_loss.append(loss.detach())
+                y_true_train.append(y.detach().cpu())
+                y_pred_train.append(y_pred.detach().cpu())
                 del loss, y_pred
 
-            train_loss = sum(epochs_loss) / len(epochs_loss)
-            _, train_mse, train_rmse, train_mae, train_mape, train_r2, train_nrmse, mean_pinball, _, _ = self.test(model, train_loader,
-                                                                              criterion, device)
+            train_loss = T.stack(epochs_loss).mean().item()
+            # Métricas de treino reaproveitam as predições já computadas no loop acima,
+            # evitando um forward pass extra sobre train_loader. Por serem coletadas
+            # durante o treino, refletem pesos em atualização ao longo da época (métrica
+            # "em fluxo", como Keras/PyTorch Lightning reportam), não os pesos finais
+            # da época como uma reavaliação a posteriori faria. val_loss/val_mse abaixo
+            # não são afetados: continuam avaliados com os pesos finais da época.
+            train_mse, train_rmse, train_mae, train_mape, train_r2, train_nrmse, mean_pinball = self.accumulate_metrics(
+                T.cat(y_true_train, dim=0), T.cat(y_pred_train, dim=0)
+            )
             val_loss, val_mse, val_rmse, val_mae, val_mape, val_r2, val_nrmse, mean_pinball, y_true_val, y_pred_val = self.test(model, val_loader, criterion, device)
             log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{epochs} | [Train]: loss {train_loss:.6f}, MSE: {train_mse:.6f} | [Val]: loss {val_loss:.6f}, MSE: {val_mse:.6f}")
             # wandb.log({
