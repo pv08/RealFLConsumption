@@ -5,7 +5,7 @@ from typing import List, Tuple
 from src.utils.logger import log
 from src.utils.functions import mkdir_if_not_exists, get_available_clients_location
 
-def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], optimize_clients: bool,  clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int):
+def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], optimize_clients: bool,  clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int, disable_blockchain: bool=False):
     host, port = host_port
     mkdir_if_not_exists("lock_dir")
     services = {
@@ -18,7 +18,7 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
                 "./lock_dir:/app/lock_dir",
                 "./optuna_data:/app/optuna_db"
             ],
-            "command": f"python app-server.py --host {host} {'--optimize_clients' if optimize_clients else ''} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds}",
+            "command": f"python app-server.py --host {host} {'--optimize_clients' if optimize_clients else ''} {'--disable_blockchain' if disable_blockchain else ''} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds}",
             "runtime": "nvidia",
             "deploy": {
                 "resources": {
@@ -110,6 +110,7 @@ def main():
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--clients_per_round', type=int, default=5)
     parser.add_argument('--optimize_clients', action='store_true')
+    parser.add_argument('--disable_blockchain', action='store_true', help="Skip the Blockchain ledger on the server (no per-update hashing/duplicate-replay check, no ledger file written)")
 
 
     parser.add_argument('--gpu_slots', type=int, default=1)
@@ -121,6 +122,7 @@ def main():
                     host_port=(args.host, args.port), optimize_clients=args.optimize_clients,
                     clients_per_round=args.clients_per_round,
                     max_rounds=args.max_rounds, gpu_slots=args.gpu_slots, epochs=args.epochs,
-                    batch_size=args.batch_size, num_workers=args.num_workers)
+                    batch_size=args.batch_size, num_workers=args.num_workers,
+                    disable_blockchain=args.disable_blockchain)
 if __name__ == "__main__":
     main()

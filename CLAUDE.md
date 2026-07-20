@@ -89,7 +89,7 @@ WAITING_CLIENTS → INITIAL_EVAL → TRAINING → GLOBAL_EVAL → (loop to TRAIN
 - **TRAINING** — the selection strategy picks `clients_per_round`; selected clients get global weights (+ Optuna hparams if enabled) and train locally; non-selected clients are deferred.
 - **GLOBAL_EVAL** — all clients evaluate the freshly aggregated model; then either a new round starts or `max_rounds` is hit and `stop` is broadcast.
 
-The `check_task(client_id, message_obj)` method is the router that maps `(phase, client_id)` → one of `"defer" | "evaluate" | "train" | "stop"`. Every client update is passed through the **Blockchain ledger** (`src/structure/blockchain.py`): a SHA-256 of the pickled weights is checked against seen hashes to reject duplicate/replay contributions before aggregation.
+The `check_task(client_id, message_obj)` method is the router that maps `(phase, client_id)` → one of `"defer" | "evaluate" | "train" | "stop"`. Every client update is passed through the **Blockchain ledger** (`src/structure/blockchain.py`): a SHA-256 hashed directly over each weight array's raw bytes (no pickling) is checked against seen hashes to reject duplicate/replay contributions before aggregation. The ledger itself is appended to incrementally as JSON Lines, not rewritten in full on every block.
 
 ### Client Learning (`src/client_learning.py`, `src/utils/process_executor.py`)
 
@@ -124,7 +124,7 @@ TimeVAE strategies sweep 8 distance metrics (euclidean, squared-euclidean, manha
 ### Output Structure (all under `etc/`, gitignored)
 - `etc/fl/server/ckpt/<Model>/` — best global checkpoints (`.pth`, keyed by loss/round)
 - `etc/fl/local/ckpt/<Model>/<cid>/` — per-client local checkpoints
-- `etc/fl/logs/<Model>/` — `history_simulation.pkl`, per-round local loss `.npy`, `blockchain_ledger.json`
+- `etc/fl/logs/<Model>/` — `history_simulation.pkl`, per-round local loss `.npy`, `blockchain_ledger.jsonl`
 - `etc/fl/results/<Model>/` — final `global_model_cids_tests.pkl`
 - `etc/TimeVAE/<loc>/` — cached TimeVAE checkpoints + logs
 - `optuna_db/` — per-model SQLite Optuna studies

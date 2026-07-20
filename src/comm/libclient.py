@@ -34,7 +34,7 @@ class Message:
     def _read(self):
         try:
             # Should be ready to read
-            data = self.sock.recv(4096)
+            data = self.sock.recv(65536)
         except BlockingIOError:
             # Resource temporarily unavailable (errno EWOULDBLOCK)
             pass
@@ -59,7 +59,7 @@ class Message:
 
     def _pickle_encode(self, obj):
         """Serializa qualquer objeto Python (incluindo NumPy/Torch) para bytes."""
-        return pickle.dumps(obj)
+        return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
     def _pickle_decode(self, content_bytes):
         """Reconstrói o objeto Python a partir dos bytes."""
