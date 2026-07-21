@@ -61,6 +61,9 @@ def main():
     parser.add_argument('--enable_notifications', action='store_true',
                          help="Send a webhook notification (NOTIFY_WEBHOOK_URL) when the simulation starts, "
                               "each round begins, finishes, is interrupted, or crashes. Disabled by default.")
+    parser.add_argument('--enable_wandb', action='store_true',
+                         help="Log the FL simulation to Weights & Biases (single server-side run). "
+                              "Requires WANDB_API_KEY in the environment. Disabled by default.")
 
     args = parser.parse_args()
     print(args)
@@ -77,7 +80,8 @@ def main():
                              max_rounds=args.max_rounds, optimize_clients=args.optimize_clients,
                              wandb_config=wandb_config, seed=args.seed,
                              disable_blockchain=args.disable_blockchain,
-                             epochs=args.epochs, loc=args.loc, enable_notifications=args.enable_notifications)
+                             epochs=args.epochs, loc=args.loc, enable_notifications=args.enable_notifications,
+                             enable_wandb=args.enable_wandb)
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     lsock.bind((host, port))
@@ -134,6 +138,7 @@ def main():
             send_webhook_notification(f"FL simulation crashed: {e} (model={fl_state.model_name})")
         raise
     finally:
+        fl_state.finish_wandb()
         sel.close()
 
 if __name__ == "__main__":

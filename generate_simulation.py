@@ -5,7 +5,7 @@ from typing import List, Tuple
 from src.utils.logger import log
 from src.utils.functions import mkdir_if_not_exists, get_available_clients_location
 
-def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], optimize_clients: bool,  clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int, disable_blockchain: bool=False, seed: int=0, enable_notifications: bool=False):
+def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], optimize_clients: bool,  clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int, disable_blockchain: bool=False, seed: int=0, enable_notifications: bool=False, enable_wandb: bool=False):
     host, port = host_port
     mkdir_if_not_exists("lock_dir")
     services = {
@@ -18,7 +18,7 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
                 "./lock_dir:/app/lock_dir",
                 "./optuna_data:/app/optuna_db"
             ],
-            "command": f"python app-server.py --host {host} {'--optimize_clients' if optimize_clients else ''} {'--disable_blockchain' if disable_blockchain else ''} {'--enable_notifications' if enable_notifications else ''} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds} --epochs {epochs} --loc=\"{location}\" --seed {seed}",
+            "command": f"python app-server.py --host {host} {'--optimize_clients' if optimize_clients else ''} {'--disable_blockchain' if disable_blockchain else ''} {'--enable_notifications' if enable_notifications else ''} {'--enable_wandb' if enable_wandb else ''} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds} --epochs {epochs} --loc=\"{location}\" --seed {seed}",
             "runtime": "nvidia",
             "deploy": {
                 "resources": {
@@ -60,9 +60,6 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
             },
             "command": f"""python app-client.py --model_name {model} --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers {num_workers} --loc="{location}" --gpu_slots="{gpu_slots}" --data_path "dataset/pecanstreet/15min/{location}/train/" --test_path "dataset/pecanstreet/15min/{location}/test/"  --host fl-server --seed {seed}""",
             "environment": [
-                "WANDB_API_KEY=${WANDB_API_KEY}",
-                "WANDB_PROJECT=${WANDB_PROJECT}",
-                f"WANDB_GROUP={location}-{model}-{'optimized' if optimize_clients else 'not-optimized'}-seed{seed}",
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "CUBLAS_WORKSPACE_CONFIG=:4096:8",
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
@@ -113,6 +110,7 @@ def main():
     parser.add_argument('--optimize_clients', action='store_true')
     parser.add_argument('--disable_blockchain', action='store_true', help="Skip the Blockchain ledger on the server (no per-update hashing/duplicate-replay check, no ledger file written)")
     parser.add_argument('--enable_notifications', action='store_true', help="Send a webhook notification (NOTIFY_WEBHOOK_URL) when the server-side simulation finishes, is interrupted, or crashes. Disabled by default.")
+    parser.add_argument('--enable_wandb', action='store_true', help="Log the FL simulation to Weights & Biases (single server-side run). Requires WANDB_API_KEY in the environment. Disabled by default.")
     parser.add_argument('--seed', type=int, default=0)
 
 
@@ -127,6 +125,6 @@ def main():
                     max_rounds=args.max_rounds, gpu_slots=args.gpu_slots, epochs=args.epochs,
                     batch_size=args.batch_size, num_workers=args.num_workers,
                     disable_blockchain=args.disable_blockchain, seed=args.seed,
-                    enable_notifications=args.enable_notifications)
+                    enable_notifications=args.enable_notifications, enable_wandb=args.enable_wandb)
 if __name__ == "__main__":
     main()
