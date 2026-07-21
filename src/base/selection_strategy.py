@@ -206,12 +206,16 @@ class TimeVAEWeeklyRepresentativeSelection(BaseSelectionStrategy):
         return f"TimeVAE Weekly Representative Selection (Rounds/Week: {self.rounds_per_week})"
 
 class RandomSelection(BaseSelectionStrategy):
+    def __init__(self, seed: int = 0):
+        self._rng = random.Random(seed)
+
     def select(self, registered_clients, num_required, client_metadata=None):
-        # Transforma em lista para poder usar sample
-        available = list(registered_clients)
+        # Ordena para que a amostra dependa só de (seed, clientes registrados),
+        # não da ordem de conexão TCP (que é uma condição de corrida entre processos)
+        available = sorted(registered_clients)
         if len(available) < num_required:
             return available
-        return random.sample(available, num_required)
+        return self._rng.sample(available, num_required)
 
     def __repr__(self):
         return "Random Selection"

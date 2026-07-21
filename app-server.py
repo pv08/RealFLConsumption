@@ -23,9 +23,9 @@ def accept_wrapper(sock, fl_state):
     message = libserver.Message(sel, conn, addr, fl_state)
     sel.register(conn, selectors.EVENT_READ, data=message)
 
-def get_select_strategy(strategy: str="random", cluster_size: Optional[int]=None):
+def get_select_strategy(strategy: str="random", cluster_size: Optional[int]=None, seed: int=0):
     if strategy == "random":
-        return RandomSelection()
+        return RandomSelection(seed=seed)
     elif strategy == "fixed-representativeness" and cluster_size is not None:
         return TimeVAE(min_cluster_size=cluster_size)
     elif strategy == "weekly-representativeness" and cluster_size is not None:
@@ -53,7 +53,7 @@ def main():
     args = parser.parse_args()
     print(args)
     host, port = args.host, args.port
-    strategy = get_select_strategy(strategy=args.client_strategy, cluster_size=args.min_cluster_size)
+    strategy = get_select_strategy(strategy=args.client_strategy, cluster_size=args.min_cluster_size, seed=args.seed)
     aggregation = Aggregator(aggregation_alg=args.aggregation)
     wandb_config = {
         'project': args.wandb_project,
