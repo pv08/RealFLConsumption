@@ -1,7 +1,9 @@
 import selectors
 import socket
+import time
 import traceback
 import os
+from datetime import timedelta
 from typing import Optional
 from logging import INFO, ERROR, WARNING
 from src.comm import libserver
@@ -10,6 +12,7 @@ from src.base.aggregation_strategy import Aggregator
 from src.fl_manager import FLServerState
 from src.utils.logger import log
 from src.utils.functions import seed_all
+from src.utils.notifier import send_webhook_notification
 from argparse import ArgumentParser
 
 
@@ -49,6 +52,15 @@ def main():
     parser.add_argument('--wandb_project', type=str, default=os.getenv('WANDB_PROJECT', 'fl_default'))
     parser.add_argument('--wandb_group', type=str, default=os.getenv('WANDB_GROUP', 'default_group'))
     parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--epochs', type=int, default=None,
+                         help="Local training epochs per client. Purely informational on the server side "
+                              "(for webhook notifications) — actual epoch count is set client-side.")
+    parser.add_argument('--loc', type=str, default=None,
+                         help="Pecan Street location (austin|california|newyork|puertorico). Purely informational "
+                              "on the server side (for webhook notifications) — the server doesn't use it otherwise.")
+    parser.add_argument('--enable_notifications', action='store_true',
+                         help="Send a webhook notification (NOTIFY_WEBHOOK_URL) when the simulation starts, "
+                              "each round begins, finishes, is interrupted, or crashes. Disabled by default.")
 
     args = parser.parse_args()
     print(args)
@@ -64,7 +76,8 @@ def main():
                              clients_per_round=args.clients_per_round,
                              max_rounds=args.max_rounds, optimize_clients=args.optimize_clients,
                              wandb_config=wandb_config, seed=args.seed,
-                             disable_blockchain=args.disable_blockchain)
+                             disable_blockchain=args.disable_blockchain,
+                             epochs=args.epochs, loc=args.loc, enable_notifications=args.enable_notifications)
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     lsock.bind((host, port))
@@ -74,6 +87,7 @@ def main():
     lsock.setblocking(False)
     sel.register(lsock, selectors.EVENT_READ, data=None)
 
+    start_time = time.time()
     try:
         while True:
             events = sel.select(timeout=None)
@@ -99,9 +113,26 @@ def main():
                         message.close()
             if fl_state.simulation_over and len(fl_state.tests_received) >= fl_state.required_clients:
                 log(INFO, "Simulation concluded. Finishing the server...")
+                if args.enable_notifications:
+                    elapsed = timedelta(seconds=round(time.time() - start_time))
+                    send_webhook_notification(
+                        f"FL simulation finished — model={fl_state.model_name}, "
+                        f"aggregation={args.aggregation}, strategy={args.client_strategy}, "
+                        f"rounds={fl_state.current_round}/{args.max_rounds}, "
+                        f"required_clients={args.required_clients}, "
+                        f"best_loss={fl_state.best_loss}, best_round={fl_state.best_round}, "
+                        f"elapsed={elapsed}"
+                    )
                 break
     except KeyboardInterrupt:
         log(WARNING, "Caught keyboard interrupt, exiting")
+        if args.enable_notifications:
+            send_webhook_notification(f"FL simulation interrupted manually (model={fl_state.model_name})")
+    except Exception as e:
+        log(ERROR, f"Unhandled exception in main loop:\n{traceback.format_exc()}")
+        if args.enable_notifications:
+            send_webhook_notification(f"FL simulation crashed: {e} (model={fl_state.model_name})")
+        raise
     finally:
         sel.close()
 

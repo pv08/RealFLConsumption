@@ -12,12 +12,16 @@ from collections import OrderedDict
 from src.utils.functions import mkdir_if_not_exists, get_model, seed_all
 from src.structure.blockchain import Blockchain
 from src.utils.logger import log
+from src.utils.notifier import send_webhook_notification
 
 class FLServerState:
-    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True, wandb_config: dict=None, seed: int=0, disable_blockchain: bool=False):
+    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True, wandb_config: dict=None, seed: int=0, disable_blockchain: bool=False, epochs=None, loc=None, enable_notifications: bool=False):
         self.global_model = None
         self.global_weights = None
         self.disable_blockchain = disable_blockchain
+        self.epochs = epochs
+        self.loc = loc
+        self.enable_notifications = enable_notifications
         self.ledger = None
         self.wandb_config = wandb_config or {}
         self.seed = seed
@@ -159,6 +163,14 @@ class FLServerState:
         if self.phase == "WAITING_CLIENTS" and len(self.registered_clients) >= self.required_clients:
             self._define_global_model_architecture()
             self.phase = "INITIAL_EVAL"
+            if self.enable_notifications:
+                send_webhook_notification(
+                    f"FL simulation starting — loc={self.loc if self.loc is not None else 'N/A'}, "
+                    f"model={self.model_name}, aggregation={self.aggr_strategy.alg}, "
+                    f"selection_strategy={type(self.selection_strategy).__name__}, rounds={self.max_rounds}, "
+                    f"epochs={self.epochs if self.epochs is not None else 'N/A'}, "
+                    f"required_clients={self.required_clients}, clients_per_round={self.clients_per_round}"
+                )
             self._notify_pending_clients()
 
     def _add_to_waitlist(self, message_obj):
@@ -372,6 +384,12 @@ class FLServerState:
         self.selected_clients = set(
             self.selection_strategy.select(self.registered_clients, self.clients_per_round)
         )
+
+        if self.enable_notifications:
+            send_webhook_notification(
+                f"FL round {self.current_round + 1}/{self.max_rounds} started — "
+                f"selected clients: {sorted(self.selected_clients)}"
+            )
 
         selection_log = {"server/round": self.current_round}
 

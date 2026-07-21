@@ -5,7 +5,7 @@ from typing import List, Tuple
 from src.utils.logger import log
 from src.utils.functions import mkdir_if_not_exists, get_available_clients_location
 
-def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], optimize_clients: bool,  clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int, disable_blockchain: bool=False, seed: int=0):
+def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], optimize_clients: bool,  clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int, disable_blockchain: bool=False, seed: int=0, enable_notifications: bool=False):
     host, port = host_port
     mkdir_if_not_exists("lock_dir")
     services = {
@@ -18,7 +18,7 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
                 "./lock_dir:/app/lock_dir",
                 "./optuna_data:/app/optuna_db"
             ],
-            "command": f"python app-server.py --host {host} {'--optimize_clients' if optimize_clients else ''} {'--disable_blockchain' if disable_blockchain else ''} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds} --seed {seed}",
+            "command": f"python app-server.py --host {host} {'--optimize_clients' if optimize_clients else ''} {'--disable_blockchain' if disable_blockchain else ''} {'--enable_notifications' if enable_notifications else ''} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds} --epochs {epochs} --loc=\"{location}\" --seed {seed}",
             "runtime": "nvidia",
             "deploy": {
                 "resources": {
@@ -32,6 +32,7 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
                 "WANDB_API_KEY=${WANDB_API_KEY}",
                 "WANDB_PROJECT=${WANDB_PROJECT}",
                 f"WANDB_GROUP={location}-{model}-{'optimized' if optimize_clients else 'not-optimized'}-seed{seed}",
+                "NOTIFY_WEBHOOK_URL=${NOTIFY_WEBHOOK_URL}",
                 "NVIDIA_VISIBLE_DEVICES=all",
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
                 "MALLOC_ARENA_MAX=2",
@@ -111,6 +112,7 @@ def main():
     parser.add_argument('--clients_per_round', type=int, default=5)
     parser.add_argument('--optimize_clients', action='store_true')
     parser.add_argument('--disable_blockchain', action='store_true', help="Skip the Blockchain ledger on the server (no per-update hashing/duplicate-replay check, no ledger file written)")
+    parser.add_argument('--enable_notifications', action='store_true', help="Send a webhook notification (NOTIFY_WEBHOOK_URL) when the server-side simulation finishes, is interrupted, or crashes. Disabled by default.")
     parser.add_argument('--seed', type=int, default=0)
 
 
@@ -124,6 +126,7 @@ def main():
                     clients_per_round=args.clients_per_round,
                     max_rounds=args.max_rounds, gpu_slots=args.gpu_slots, epochs=args.epochs,
                     batch_size=args.batch_size, num_workers=args.num_workers,
-                    disable_blockchain=args.disable_blockchain, seed=args.seed)
+                    disable_blockchain=args.disable_blockchain, seed=args.seed,
+                    enable_notifications=args.enable_notifications)
 if __name__ == "__main__":
     main()
