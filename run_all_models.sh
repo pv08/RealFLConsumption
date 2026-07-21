@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# Parse --loc / -loc, --epochs / -epochs, --clients_per_round / -clients_per_round, --gpu_slots / -gpu_slots, --notify / -notify
+# Parse --loc / -loc, --epochs / -epochs, --clients_per_round / -clients_per_round, --gpu_slots / -gpu_slots, --notify / -notify, --wandb / -wandb
 TARGET_LOC=""
 EPOCHS=200
 CLIENTS_PER_ROUND=5
 GPU_SLOTS=1
 NOTIFY=false
+WANDB=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --loc|-loc)
@@ -26,6 +27,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --notify|-notify)
             NOTIFY=true
+            shift
+            ;;
+        --wandb|-wandb)
+            WANDB=true
             shift
             ;;
         *)
@@ -50,7 +55,7 @@ notify() {
 }
 
 if [[ -z "$TARGET_LOC" ]]; then
-    echo "[!] - Usage: bash $0 -loc <austin|california|newyork|puertorico> [-epochs <n>] [-clients_per_round <n>] [-gpu_slots <n>] [-notify]"
+    echo "[!] - Usage: bash $0 -loc <austin|california|newyork|puertorico> [-epochs <n>] [-clients_per_round <n>] [-gpu_slots <n>] [-notify] [-wandb]"
     exit 1
 fi
 
@@ -74,6 +79,10 @@ NOTIFY_ARG=""
 if [[ "$NOTIFY" == "true" ]]; then
     NOTIFY_ARG="--enable_notifications"
 fi
+WANDB_ARG=""
+if [[ "$WANDB" == "true" ]]; then
+    WANDB_ARG="--enable_wandb"
+fi
 
 # Safety net: if the script gets interrupted mid-run, still tear down
 # whichever compose stack is currently up so container names are freed.
@@ -95,7 +104,7 @@ for i in "${!MODELS[@]}"; do
     echo "[$CURRENT/$TOTAL] - Generating simulation for model=${MODEL} loc=${TARGET_LOC} seed=${SEED}"
 
     python generate_simulation.py --loc "$TARGET_LOC" --model_name "$MODEL" --seed "$SEED" \
-        --epochs "$EPOCHS" --clients_per_round "$CLIENTS_PER_ROUND" --gpu_slots "$GPU_SLOTS" $NOTIFY_ARG
+        --epochs "$EPOCHS" --clients_per_round "$CLIENTS_PER_ROUND" --gpu_slots "$GPU_SLOTS" $NOTIFY_ARG $WANDB_ARG
 
     if [[ ! -f "$COMPOSE_FILE" ]]; then
         echo "[!] - Expected compose file ${COMPOSE_FILE} was not generated. Skipping..."
