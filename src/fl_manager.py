@@ -65,6 +65,7 @@ class FLServerState:
         self.client_active_trials = {}
 
         self.history = defaultdict(list)
+        self.history["seed"] = self.seed
         self.best_loss, self.best_round = np.inf, -1
         log(INFO, f"Aggregation Algorithm: {repr(self.aggr_strategy)}")
         log(INFO, f"Client Selection Mechanism: {repr(self.selection_strategy)}")
