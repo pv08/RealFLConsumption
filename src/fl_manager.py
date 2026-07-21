@@ -12,30 +12,40 @@ from collections import OrderedDict
 from src.utils.functions import mkdir_if_not_exists, get_model, seed_all
 from src.structure.blockchain import Blockchain
 from src.utils.logger import log
+from src.utils.notifier import send_webhook_notification
 
 class FLServerState:
-    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True, wandb_config: dict=None, seed: int=0, disable_blockchain: bool=False):
+    def __init__(self, selection_strategy, aggr_strategy, required_clients=5, clients_per_round=2, max_rounds=10, optimize_clients: bool=True, wandb_config: dict=None, seed: int=0, disable_blockchain: bool=False, epochs=None, loc=None, enable_notifications: bool=False, enable_wandb: bool=False):
         self.global_model = None
         self.global_weights = None
         self.disable_blockchain = disable_blockchain
+        self.epochs = epochs
+        self.loc = loc
+        self.enable_notifications = enable_notifications
+        self.enable_wandb = enable_wandb
         self.ledger = None
         self.wandb_config = wandb_config or {}
         self.seed = seed
         seed_all(self.seed)
-        # wandb.init(
-        #     project=self.wandb_config.get('project', 'fl_simulation'),
-        #     group=self.wandb_config.get('group', 'experiment_1'),
-        #     name="server_orchestrator",
-        #     job_type="server",
-        #     config={
-        #         "strategy": str(selection_strategy),
-        #         "aggregation": str(aggr_strategy),
-        #         "clients_per_round": clients_per_round,
-        #         "required_clients": required_clients,
-        #         "max_rounds": max_rounds
-        #     },
-        #     reinit=True
-        # )
+        if self.enable_wandb:
+            wandb.init(
+                project=self.wandb_config.get('project', 'fl_simulation'),
+                group=self.wandb_config.get('group', 'experiment_1'),
+                name=f"{loc}-{aggr_strategy}-seed{seed}",
+                job_type="server",
+                config={
+                    "strategy": str(selection_strategy),
+                    "aggregation": str(aggr_strategy),
+                    "clients_per_round": clients_per_round,
+                    "required_clients": required_clients,
+                    "max_rounds": max_rounds,
+                    "optimize_clients": optimize_clients,
+                    "seed": seed,
+                    "loc": loc,
+                    "epochs": epochs,
+                },
+                reinit=True
+            )
         self.phase = "WAITING_CLIENTS" # WAITING_CLIENTS, INITIAL_EVAL, TRAINING, GLOBAL_EVAL
         self.selection_strategy = selection_strategy
         self.aggr_strategy = aggr_strategy
@@ -65,9 +75,23 @@ class FLServerState:
         self.client_active_trials = {}
 
         self.history = defaultdict(list)
+        self.history["seed"] = self.seed
         self.best_loss, self.best_round = np.inf, -1
         log(INFO, f"Aggregation Algorithm: {repr(self.aggr_strategy)}")
         log(INFO, f"Client Selection Mechanism: {repr(self.selection_strategy)}")
+
+    def _wlog(self, payload: dict):
+        """Loga no W&B se habilitado. Sem step explícito: o step interno do W&B
+        auto-incrementa e `round` é usado como eixo-x no dashboard, evitando
+        colisão entre INITIAL_EVAL e GLOBAL_EVAL da mesma rodada."""
+        if not self.enable_wandb:
+            return
+        wandb.log({**payload, "round": self.current_round, "phase": self.phase})
+
+    def finish_wandb(self):
+        """Encerra o run do W&B, se habilitado."""
+        if self.enable_wandb:
+            wandb.finish()
 
     def _get_or_create_study(self, client_id):
         """Cria um estudo do Optuna para o cliente, se ainda não existir."""
@@ -158,6 +182,14 @@ class FLServerState:
         if self.phase == "WAITING_CLIENTS" and len(self.registered_clients) >= self.required_clients:
             self._define_global_model_architecture()
             self.phase = "INITIAL_EVAL"
+            if self.enable_notifications:
+                send_webhook_notification(
+                    f"FL simulation starting — loc={self.loc if self.loc is not None else 'N/A'}, "
+                    f"model={self.model_name}, aggregation={self.aggr_strategy.alg}, "
+                    f"selection_strategy={type(self.selection_strategy).__name__}, rounds={self.max_rounds}, "
+                    f"epochs={self.epochs if self.epochs is not None else 'N/A'}, "
+                    f"required_clients={self.required_clients}, clients_per_round={self.clients_per_round}"
+                )
             self._notify_pending_clients()
 
     def _add_to_waitlist(self, message_obj):
@@ -236,7 +268,7 @@ class FLServerState:
         for metric_name, metric_val in _weighted_metrics.items():
             log_dict[f"server/global_{metric_name}"] = metric_val
 
-        # wandb.log(log_dict)
+        self._wlog(log_dict)
 
     def receive_test(self, client_id, results):
         if client_id not in self.tests_received:
@@ -297,6 +329,20 @@ class FLServerState:
         self.history["update"].append({"round": self.current_round, "round_update": self.updates_received, "train_weighted_loss": _train_weighted_losses,
                                             "train_weighted_metrics": _train_weighted_metrics, "val_weighted_loss": _val_weighted_losses,
                                             "val_weighted_metrics": _val_weighted_metrics})
+
+        update_log = {
+            "server/train_loss": _train_weighted_losses,
+            "server/val_loss": _val_weighted_losses,
+        }
+        for metric_name, metric_val in _train_weighted_metrics.items():
+            update_log[f"server/train_{metric_name}"] = metric_val
+        for metric_name, metric_val in _val_weighted_metrics.items():
+            update_log[f"server/val_{metric_name}"] = metric_val
+        for cid, v in self.updates_received.items():
+            update_log[f"client/{cid}/train_loss"] = v["train_loss"]
+            update_log[f"client/{cid}/val_loss"] = v["val_loss"]
+            update_log[f"client/{cid}/time_spent"] = v["time_spent"]
+        self._wlog(update_log)
 
         mkdir_if_not_exists(f'etc/fl/local/ckpt/{self.model_name}/')
         mkdir_if_not_exists(f'etc/fl/logs/{self.model_name}/local/')
@@ -372,15 +418,21 @@ class FLServerState:
             self.selection_strategy.select(self.registered_clients, self.clients_per_round)
         )
 
+        if self.enable_notifications:
+            send_webhook_notification(
+                f"FL round {self.current_round + 1}/{self.max_rounds} started — "
+                f"selected clients: {sorted(self.selected_clients)}"
+            )
+
         selection_log = {"server/round": self.current_round}
 
         self.history["client_selection"].append({"round": self.current_round, "clients": list(self.selected_clients)})
         for cid in self.registered_clients.keys():
-            selection_log[f"selection/client_{cid}"] = 1 if cid in selection_log else 0
+            selection_log[f"selection/client_{cid}"] = 1 if cid in self.selected_clients else 0
 
         self.phase = "TRAINING"
 
-        # wandb.log(selection_log)
+        self._wlog(selection_log)
 
         log(INFO, f"Starting round {self.current_round}...")
         log(INFO, f"Clients selected: {self.selected_clients}")

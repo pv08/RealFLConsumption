@@ -7,8 +7,6 @@ import torch as T
 import torch.nn as nn
 import math
 import gc
-import wandb
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from typing import List, Optional, Union, Any, Dict
@@ -35,20 +33,9 @@ class ClientLearning:
         self.train_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="train", data_path=self.args.data_path)
         self.val_dataset = LocalFileDataset(client_id=self.args.filter_bs, _type="val", data_path=self.args.data_path)
 
-        # if wandb.run is None:
-        #     wandb.init(
-        #         project=getattr(self.args, 'wandb_project', 'fl_simulation'),
-        #         group=getattr(self.args, 'wandb_group', 'experiment_1'),
-        #         name=f"client_{self.cid}",
-        #         job_type="client_train",
-        #         config=vars(self.args),
-        #         reinit=True
-        #     )
-
         if hparams:
             for k, v in hparams.items():
                 setattr(self.args, k, v)
-            # wandb.config.update(hparams, allow_val_change=True)
 
         self.model = None
 
@@ -382,15 +369,6 @@ class ClientLearning:
             )
             val_loss, val_mse, val_rmse, val_mae, val_mape, val_r2, val_nrmse, mean_pinball, y_true_val, y_pred_val = self.test(model, val_loader, criterion, device)
             log(INFO, f"Participant: {self.cid} | Epoch {epoch + 1}/{epochs} | [Train]: loss {train_loss:.6f}, MSE: {train_mse:.6f} | [Val]: loss {val_loss:.6f}, MSE: {val_mse:.6f}")
-            # wandb.log({
-            #     "client/train_loss": train_loss,
-            #     "client/val_loss": val_loss,
-            #     "client/train_rmse": train_rmse,
-            #     "client/val_rmse": val_rmse,
-            #     "client/epoch": epoch + 1,
-            #     "client/lr": lr
-            # })
-            self._log_prediction_slider(y_true_val, y_pred_val, epoch + 1)
             train_loss_history.append(train_mse)
             train_rmse_history.append(train_rmse)
             val_loss_history.append(val_mse)
@@ -425,27 +403,6 @@ class ClientLearning:
         del criterion
         gc.collect()
         return best_model, train_loss_history, val_loss_history
-
-
-    def _log_prediction_slider(self, y_true, y_pred, epoch, max_points=96):
-        y_t = y_true[:max_points, 0] if y_true.ndim > 1 else y_true[:max_points]
-        y_p = y_pred[:max_points, 0] if y_pred.ndim > 1 else y_pred[:max_points]
-        fig, ax = plt.subplots(figsize=(10, 4))
-
-        ax.plot(y_t, label='Real.', color='#1f77b4', linewidth=2)
-        ax.plot(y_p, label='Pred.', color='#ff7f0e', linewidth=2, linestyle='--')
-
-        ax.set_title(f'{self.cid}')
-        ax.set_ylabel('Grid')
-        ax.set_xlabel('Obs.')
-        ax.legend(loc="upper right")
-        ax.grid(True, linestyle=':', alpha=0.6)
-
-        # wandb.log({
-        #     "client/prediction_chart": wandb.Image(fig),
-        #     "client/epoch": epoch
-        # })
-        plt.close(fig)
 
 
     def get_criterion(self, crit_name: str="mse"):
