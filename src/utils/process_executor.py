@@ -29,7 +29,8 @@ def _evaluate_wrapper(queue, args, params, req_latent_space):
         latent_space = None
         if req_latent_space:
             log(INFO, f"Server requested {args.filter_bs}'s latent space to cluster")
-            latent_space = trainer.get_latent_space(args.latent_dim, args.timevae_epochs)
+            weekly = getattr(args, 'weekly_vae', False)
+            latent_space = trainer.get_latent_space(args.latent_dim, args.timevae_epochs, weekly)
         queue.put({"status": "success", "result": (num_test_instances, test_loss, test_eval_metrics, latent_space)})
     except Exception as e:
         queue.put({"status": "error", "message": str(e) + "\n" + traceback.format_exc()})

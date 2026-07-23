@@ -52,14 +52,14 @@ class ClientLearning:
 
         self.model = None
 
-    def get_latent_space(self, latent_dim: int=8, epochs: int=8):
+    def get_latent_space(self, latent_dim: int=8, epochs: int=8, weekly: bool=False):
         from src.models.timeVAE.timevae import TimeVAE
         timevae = TimeVAE(hidden_sizes=self.args.hidden_dims, trend_poly=self.args.trend_poly,
                           custom_seats=self.args.custom_seats,
                           use_residual_conn=self.args.use_residual_conn, seq_len=self.args.num_lags,
                           feat_dim=self.input_dim, latent_dim=latent_dim, device=self.args.device)
 
-        train_loader, val_loader = self._load_data(shuffle=True)
+        train_loader, val_loader = self._load_data(shuffle=False)  # MUST NOT SHUFFLE FOR WEEKLY!
 
         mkdir_if_not_exists(f'etc/TimeVAE/{self.args.loc}/ckpt/')
         mkdir_if_not_exists(f'etc/TimeVAE/{self.args.loc}/logs/')
@@ -69,7 +69,10 @@ class ClientLearning:
             timevae.load_state_dict(T.load(f'etc/TimeVAE/{self.args.loc}/ckpt/{self.cid}-latent_dim_{latent_dim}.pth', map_location=self.args.device))
         else:
             log(INFO, f"{self.cid}'s TimeVAE model for latent dim {latent_dim} not found. Training client's model")
-            timevae, train_val_log = self.fit_timevae(timevae, train_loader, val_loader, epochs)
+            # For training it's better to shuffle, but we will just pass train_loader. Wait, we should probably have a separate shuffled loader for training.
+            # Let's create a shuffled loader just for fitting if needed.
+            train_loader_shuffled, val_loader_shuffled = self._load_data(shuffle=True)
+            timevae, train_val_log = self.fit_timevae(timevae, train_loader_shuffled, val_loader_shuffled, epochs)
             T.save(timevae.state_dict(), f'etc/TimeVAE/{self.args.loc}/ckpt/{self.cid}-latent_dim_{latent_dim}.pth')
 
             with open(f'etc/TimeVAE/{self.args.loc}/logs/{self.cid}-latent_dim-{latent_dim}-train_val.pkl', "wb") as f:
@@ -88,7 +91,16 @@ class ClientLearning:
                 latent_vectors.append(z_mean.cpu())
 
         all_latents = T.cat(latent_vectors, dim=0)
-        client_signature = all_latents.mean(dim=0).numpy()
+        
+        if weekly:
+            client_signature = {}
+            samples_per_week = 672  # 15min * 4 * 24 * 7
+            for i, start_idx in enumerate(range(0, len(all_latents), samples_per_week)):
+                week_idx = i + 1
+                chunk = all_latents[start_idx:start_idx+samples_per_week]
+                client_signature[f"week_{week_idx}"] = chunk.mean(dim=0).numpy().tolist()
+        else:
+            client_signature = all_latents.mean(dim=0).numpy()
 
         return client_signature
 

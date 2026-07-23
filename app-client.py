@@ -102,6 +102,7 @@ def main():
     # 4. TimeVAE model args
     parser.add_argument("--latent_dim", type=int, default=8)
     parser.add_argument("--timevae_epochs", type=int, default=1)
+    parser.add_argument("--weekly_vae", action='store_true')
     parser.add_argument('--custom_seats', type=any, default=None)
     parser.add_argument('--hidden_dims', type=list, default=[2, 4, 8])
     parser.add_argument('--trend_poly', type=int, default=0)
