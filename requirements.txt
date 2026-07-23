@@ -12,3 +12,4 @@ optuna==4.7.0
 optuna-dashboard==0.20.0
 twilio==9.10.1
 wandb==0.25.0
+filelock==3.16.1

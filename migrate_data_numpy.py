@@ -2,8 +2,10 @@ import pickle
 import numpy as np
 from logging import INFO
 from argparse import ArgumentParser
+from filelock import FileLock
 from src.dataset.processing import Processing
 from src.utils.logger import log
+from src.utils.functions import mkdir_if_not_exists
 from bson.binary import Binary
 
 
@@ -39,30 +41,33 @@ def main():
     args = parser.parse_args()
     log(INFO, f"Migrating {args.filter_bs} data to Numpy")
     print(args)
-    processing = Processing(args=args, data_path=args.data_path)
-    X_train, X_val, y_train, y_val, x_scaler, y_scaler = processing.make_preprocessing(filter_bs=args.filter_bs, per_area=False, peek=False)
-    X_test, y_test, _ = processing.make_test_processing(filter_data=args.filter_bs,
-                                                                                  x_scaler=x_scaler,
-                                                                                  y_scaler=y_scaler)
+    mkdir_if_not_exists("/app/lock_dir")
+    with FileLock("/app/lock_dir/migration.lock", timeout=-1):
+        log(INFO, f"Acquired migration lock for client {args.filter_bs}. Starting memory-intensive migration...")
+        processing = Processing(args=args, data_path=args.data_path)
+        X_train, X_val, y_train, y_val, x_scaler, y_scaler = processing.make_preprocessing(filter_bs=args.filter_bs, per_area=False, peek=False)
+        X_test, y_test, _ = processing.make_test_processing(filter_data=args.filter_bs,
+                                                                                      x_scaler=x_scaler,
+                                                                                      y_scaler=y_scaler)
 
-    input_dim, output_dim = processing.get_input_dims(X_train), y_train.shape[1]
+        input_dim, output_dim = processing.get_input_dims(X_train), y_train.shape[1]
 
-    meta_obj = {
-        "client_id": args.filter_bs,
-        "input_dim": input_dim,
-        "output_dim": output_dim,
-        "x_scaler": Binary(pickle.dumps(x_scaler, protocol=4)),
-        "y_scaler": Binary(pickle.dumps(y_scaler, protocol=4)),
-        "num_train_samples": len(X_train),
-        "num_val_samples": len(X_val)
-    }
+        meta_obj = {
+            "client_id": args.filter_bs,
+            "input_dim": input_dim,
+            "output_dim": output_dim,
+            "x_scaler": Binary(pickle.dumps(x_scaler, protocol=4)),
+            "y_scaler": Binary(pickle.dumps(y_scaler, protocol=4)),
+            "num_train_samples": len(X_train),
+            "num_val_samples": len(X_val)
+        }
 
-    with open(f"dataset/pecanstreet/15min/{args.loc}/train/{args.filter_bs}_metadata.pkl", "wb") as f:
-        pickle.dump(meta_obj, f)
+        with open(f"dataset/pecanstreet/15min/{args.loc}/train/{args.filter_bs}_metadata.pkl", "wb") as f:
+            pickle.dump(meta_obj, f)
 
-    save_batch(X_train, y_train, "train", args.filter_bs, loc=args.loc)
-    save_batch(X_val, y_val, "val", args.filter_bs, loc=args.loc)
-    save_batch(X_test, y_test, "test", args.filter_bs, loc=args.loc)
+        save_batch(X_train, y_train, "train", args.filter_bs, loc=args.loc)
+        save_batch(X_val, y_val, "val", args.filter_bs, loc=args.loc)
+        save_batch(X_test, y_test, "test", args.filter_bs, loc=args.loc)
     log(INFO, f"Migration for {args.filter_bs}'s data from {args.loc} finished")
 
 
