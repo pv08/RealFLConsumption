@@ -5,7 +5,7 @@ from typing import List, Tuple
 from src.utils.logger import log
 from src.utils.functions import mkdir_if_not_exists, get_available_clients_location
 
-def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], optimize_clients: bool,  clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int):
+def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple[str, int], optimize_clients: bool,  clients_per_round: int, max_rounds: int, gpu_slots: int, epochs: int, batch_size: int, num_workers: int, cpu_only: bool = False, weekly_vae: bool = False):
     host, port = host_port
     mkdir_if_not_exists("lock_dir")
     services = {
@@ -19,68 +19,65 @@ def _create_compose(model: str, location: str, cids: List[int], host_port: Tuple
                 "./optuna_data:/app/optuna_db"
             ],
             "command": f"python app-server.py --host {host} {'--optimize_clients' if optimize_clients else ''} --required_clients {len(cids)} --clients_per_round {clients_per_round} --max_rounds {max_rounds}",
-            "runtime": "nvidia",
-            "deploy": {
-                "resources": {
-                    "reservations": {
-                        "devices": [{"driver": "nvidia", "count": 1, "capabilities": ["gpu"]}]
-                    }
-                }
-            },
             "ports": [f"{port}:{port}"],
             "environment": [
-                "WANDB_API_KEY=${WANDB_API_KEY}",
-                "WANDB_PROJECT=${WANDB_PROJECT}",
-                f"WANDB_GROUP={location}-{model}-{'optimized' if optimize_clients else 'not-optimized'}",
-                "CUDA_LAUNCH_BLOCKING=1",
-                "NVIDIA_VISIBLE_DEVICES=all",
+                "WANDB_MODE=disabled",
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
                 "MALLOC_ARENA_MAX=2",
                 "OMP_NUM_THREADS=1",
-
             ],
-            "shm_size": '1gb',
+            "shm_size": '8gb',
             "networks": ["fl-network"]
         }
     }
+
+    if not cpu_only:
+        services["fl-server"]["runtime"] = "nvidia"
+        services["fl-server"]["deploy"] = {
+            "resources": {
+                "reservations": {
+                    "devices": [{"driver": "nvidia", "count": 1, "capabilities": ["gpu"]}]
+                }
+            }
+        }
+        services["fl-server"]["environment"].append("NVIDIA_VISIBLE_DEVICES=all")
 
     for c in cids:
         service_name = f"client_{c}"
         services[service_name] = {
             "image": "fl-simulation-img",
-            "runtime": "nvidia",
             "container_name": f"fl_client_{c}",
             "volumes": [
                 "./etc:/app/etc",
                 "./lock_dir:/app/lock_dir",
-                "./dataset:/app/dataset:ro"
+                "./dataset:/app/dataset"
             ],
             "depends_on": {
                 "fl-server": {"condition": "service_started"},
             },
-            "command": f"""python app-client.py --model_name {model} --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers {num_workers} --loc="{location}" --gpu_slots="{gpu_slots}" --data_path "dataset/pecanstreet/15min/{location}/train/" --test_path "dataset/pecanstreet/15min/{location}/test/"  --host fl-server""",
+            "command": f"""bash -c "if [ ! -f dataset/pecanstreet/15min/{location}/train/{c}_metadata.pkl ]; then python migrate_data_numpy.py --loc {location} --filter_bs {c} --data_path dataset/pecanstreet/15min/{location}/train/ --test_path dataset/pecanstreet/15min/{location}/test/; fi && python app-client.py --model_name {model} --filter_bs {c} --epochs {epochs} --batch_size {batch_size} --num_workers {num_workers} --loc={location} --gpu_slots={gpu_slots} --data_path dataset/pecanstreet/15min/{location}/train/ --test_path dataset/pecanstreet/15min/{location}/test/ --host fl-server {'--weekly_vae' if weekly_vae else ''}" """,
             "environment": [
-                "WANDB_API_KEY=${WANDB_API_KEY}",
-                "WANDB_PROJECT=${WANDB_PROJECT}",
-                f"WANDB_GROUP={location}-{model}-{'optimized' if optimize_clients else 'not-optimized'}",
-                "CUDA_LAUNCH_BLOCKING=1",
-                "NVIDIA_VISIBLE_DEVICES=all",
+                "WANDB_MODE=disabled",
                 "CUBLAS_WORKSPACE_CONFIG=:4096:8",
                 "PYTORCH_ALLOC_CONF=expandable_segments:True",
                 "MALLOC_ARENA_MAX=2",
                 "OMP_NUM_THREADS=1",
                 f"CLIENT_ID={c}"
             ],
-            "deploy": {
+            "shm_size": '8gb',
+            "networks": ["fl-network"]
+        }
+
+        if not cpu_only:
+            services[service_name]["runtime"] = "nvidia"
+            services[service_name]["deploy"] = {
                 "resources": {
                     "reservations": {
                         "devices": [{"driver": "nvidia", "count": 1, "capabilities": ["gpu"]}]
                     }
                 }
-            },
-            "shm_size": '1gb',
-            "networks": ["fl-network"]
-        }
+            }
+            services[service_name]["environment"].append("NVIDIA_VISIBLE_DEVICES=all")
 
     compose_data = {
         "services": services,
@@ -112,17 +109,23 @@ def main():
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--clients_per_round', type=int, default=5)
     parser.add_argument('--optimize_clients', action='store_true')
-
+    parser.add_argument('--cpu_only', action='store_true', help='Generate compose file without NVIDIA runtime for local CPU testing')
+    parser.add_argument('--max_clients', type=int, default=0, help='Limit the total number of clients generated (useful for local testing)')
+    parser.add_argument('--weekly_vae', action='store_true', help='Enable weekly latent space signatures for clients')
 
     parser.add_argument('--gpu_slots', type=int, default=1)
 
     args = parser.parse_args()
     cids = get_available_clients_location(args.loc)
 
+    if args.max_clients > 0:
+        cids = cids[:args.max_clients]
+
     _create_compose(model=args.model_name, location=args.loc, cids=cids,
                     host_port=(args.host, args.port), optimize_clients=args.optimize_clients,
                     clients_per_round=args.clients_per_round,
                     max_rounds=args.max_rounds, gpu_slots=args.gpu_slots, epochs=args.epochs,
-                    batch_size=args.batch_size, num_workers=args.num_workers)
+                    batch_size=args.batch_size, num_workers=args.num_workers, cpu_only=args.cpu_only,
+                    weekly_vae=args.weekly_vae)
 if __name__ == "__main__":
     main()
