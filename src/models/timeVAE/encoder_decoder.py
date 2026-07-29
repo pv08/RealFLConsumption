@@ -41,7 +41,7 @@ class TimeVAEEncoder(nn.Module):
 
 
 class TimeVAEDecoder(nn.Module):
-    def __init__(self, seq_len, feat_dim, hidden_layer_sizes, latent_dim, device, trend_poly=0, custom_seas=None, use_residual_conn=True, encoder_last_dense_dim=None):
+    def __init__(self, seq_len, feat_dim, hidden_layer_sizes, latent_dim, device, trend_poly=0, custom_seas=None, use_residual_conn=True, encoder_last_dense_dim=None, cond_dim=0):
         super(TimeVAEDecoder, self).__init__()
         self.seq_len=seq_len
         self.feat_dim = feat_dim
@@ -51,26 +51,53 @@ class TimeVAEDecoder(nn.Module):
         self.use_residual_conn = use_residual_conn
         self.encoder_last_dense_dim = encoder_last_dense_dim
         self.device = device
-        self.level_model = LevelModel(self.latent_dim, self.feat_dim, self.seq_len, device)
+
+        # Condicionamento: toda sub-camada do decoder consome um vetor (B, D) e devolve
+        # (B, seq_len, feat_dim). Concatenar o embedding do contexto a `z` e construir as
+        # sub-camadas com D = latent_dim + cond_dim condiciona o decoder inteiro sem alterar
+        # nenhuma delas. cond_dim=0 -> D = latent_dim, exatamente o modelo não-condicional.
+        self.cond_dim = cond_dim
+        dec_dim = latent_dim + cond_dim
+
+        self.level_model = LevelModel(dec_dim, self.feat_dim, self.seq_len, device)
+
+        # As camadas de tendência e sazonalidade são construídas AQUI, não no forward. Instanciá-las
+        # dentro do forward (como fazia a implementação de referência) criava pesos novos e
+        # aleatórios a cada chamada: não eram registrados como parâmetros, nunca eram treinados nem
+        # salvos no state_dict, e o decoder devolvia ruído sempre que trend_poly>0 ou custom_seas
+        # estavam ativos. Com os defaults (trend_poly=0, custom_seas=None) o bug ficava latente e o
+        # modelo era, na prática, só level+residual — um VAE convolucional comum, não o TimeVAE.
+        self.trend_layer = None
+        if trend_poly is not None and trend_poly > 0:
+            self.trend_layer = TrendLayer(seq_len, feat_dim, dec_dim, trend_poly, device)
+
+        self.seasonal_layer = None
+        if custom_seas is not None and len(custom_seas) > 0:
+            self.seasonal_layer = SeasonalLayer(seq_len, feat_dim, dec_dim, custom_seas, device)
 
         if use_residual_conn:
-            self.residual_conn = ResidualConnection(seq_len, feat_dim, hidden_layer_sizes, latent_dim, encoder_last_dense_dim, device)
+            self.residual_conn = ResidualConnection(seq_len, feat_dim, hidden_layer_sizes, dec_dim, encoder_last_dense_dim, device)
 
         self.to(device)
 
-    def forward(self, z):
+    def forward(self, z, c=None):
+        """z: (B, latent_dim); c: (B, cond_dim) obrigatório quando cond_dim > 0."""
+        if self.cond_dim > 0:
+            if c is None:
+                raise ValueError("Conditional decoder (cond_dim > 0) called without a condition vector.")
+            z = T.cat([z, c], dim=1)
+        elif c is not None:
+            raise ValueError("Condition vector passed to a non-conditional decoder (cond_dim == 0).")
+
         outputs = self.level_model(z)
-        if self.trend_poly is not None and self.trend_poly > 0:
-            trend_vals = TrendLayer(self.seq_len, self.feat_dim, self.latent_dim, self.trend_poly, self.device)(z)
-            outputs += trend_vals
+        if self.trend_layer is not None:
+            outputs = outputs + self.trend_layer(z)
 
         # custom seasons
-        if self.custom_seas is not None and len(self.custom_seas) > 0:
-            cust_seas_vals = SeasonalLayer(self.seq_len, self.feat_dim, self.latent_dim, self.custom_seas, self.device)(z)
-            outputs += cust_seas_vals
+        if self.seasonal_layer is not None:
+            outputs = outputs + self.seasonal_layer(z)
 
         if self.use_residual_conn:
-            residuals = self.residual_conn(z)
-            outputs += residuals
+            outputs = outputs + self.residual_conn(z)
 
         return outputs

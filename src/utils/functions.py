@@ -6,7 +6,7 @@ import numpy as np
 import torch as T
 import glob
 import random
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 from logging import INFO
 from datetime import datetime
 from src.utils.logger import log
@@ -97,6 +97,48 @@ def convert_time_to_float(var):
         return obj.hour + obj.minute / 60.0
     except:
         return 0.0
+
+def parse_channel_weights(spec: str) -> Dict[str, float]:
+    """Converte "consumption=20,generation=5" em {"consumption": 20.0, "generation": 5.0}.
+
+    Usado pelo `--channel_wt` do eval_timevae.py: os canais não citados ficam com peso 1.0.
+    Os nomes são os de `ClientLearning.channel_names()`. String vazia/None -> {}."""
+    if not spec:
+        return {}
+    weights = {}
+    for item in spec.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if "=" not in item:
+            raise ValueError(f"Invalid channel weight {item!r}; expected 'name=value' pairs "
+                             f"separated by commas, e.g. 'consumption=20,generation=5'.")
+        name, value = item.split("=", 1)
+        weights[name.strip()] = float(value)
+    return weights
+
+
+def parse_custom_seas(spec: str) -> Optional[List[Tuple[int, int]]]:
+    """Converte "24x4" ou "24x4,7x96" em [(24, 4)] / [(24, 4), (7, 96)].
+
+    Cada par é (num_seasons, len_per_season) da SeasonalLayer do TimeVAE. Ex.: "24x4" = 24
+    estações de 4 passos = uma por hora numa janela de 15 min; "96x1" = uma por passo do dia.
+    Só faz sentido com janelas alinhadas ao dia (--align_to_day), já que a camada indexa por
+    posição na janela. None/vazio -> None (sazonalidade desligada)."""
+    if not spec:
+        return None
+    seas = []
+    for item in spec.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if "x" not in item:
+            raise ValueError(f"Invalid custom_seas {item!r}; expected 'NxL' pairs (num_seasons x "
+                             f"len_per_season) separated by commas, e.g. '24x4'.")
+        num_seasons, len_per_season = item.split("x", 1)
+        seas.append((int(num_seasons), int(len_per_season)))
+    return seas or None
+
 
 def get_params(alg):
     if alg == "fedprox":
