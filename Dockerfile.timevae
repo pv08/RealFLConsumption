@@ -1,0 +1,26 @@
+# Imagem para a avaliação generativa do TimeVAE (eval_timevae.py, TSTR/TRTS).
+# Separada da imagem da simulação FL (Dockerfile) porque só esta precisa do
+# CUBLAS_WORKSPACE_CONFIG embutido — ver abaixo.
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# seed_all() chama torch.use_deterministic_algorithms(True). Em CUDA >= 10.2 isso exige esta
+# variável, senão o backward do TimeVAE aborta com RuntimeError já na primeira época. Fica no
+# ENV da imagem para não depender de quem sobe o container lembrar de exportá-la.
+ENV CUBLAS_WORKSPACE_CONFIG=:4096:8
+
+# Estabilidade de memória em GPU (mesmos valores usados pelos serviços de cliente da simulação FL).
+ENV PYTORCH_ALLOC_CONF=expandable_segments:True
+ENV OMP_NUM_THREADS=1
+ENV MALLOC_ARENA_MAX=2
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt --no-cache-dir
+
+COPY . .
+
+# Sem CMD: cada serviço do compose passa o seu próprio `command` com as flags do braço.

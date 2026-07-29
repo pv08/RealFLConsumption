@@ -99,6 +99,9 @@ def main():
     # 4. TimeVAE model args
     parser.add_argument("--latent_dim", type=int, default=8)
     parser.add_argument("--timevae_epochs", type=int, default=1)
+    parser.add_argument("--samples_per_week", type=int, default=672,
+                        help="Janelas consecutivas por 'semana' no modo weekly-representativeness "
+                             "(default 672 = 7 dias x 96 passos/dia a 15 min).")
     parser.add_argument('--custom_seats', type=any, default=None)
     parser.add_argument('--hidden_dims', type=list, default=[2, 4, 8])
     parser.add_argument('--trend_poly', type=int, default=0)
@@ -158,23 +161,19 @@ def main():
                 log(INFO, f"Evaluating global model at {data.get('phase', 'N/A')} phase")
 
                 req_latent_space = data.get("req_latent_space", False)
+                latent_mode = data.get("latent_mode", "fixed")
 
                 global_model_params = data["weights"]
                 with GPULock(client_id=args.filter_bs, slots=args.gpu_slots):
                     num_test_instances, test_loss, test_eval_metrics, latent_space = ProcessExecutor.run_evaluate(
                         args=args,
                         params=global_model_params,
-                        req_latent_space=req_latent_space
+                        req_latent_space=req_latent_space,
+                        latent_mode=latent_mode
                     )
 
-                # trainer = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
-                #
-                # num_test_instances, test_loss, test_eval_metrics = trainer.evaluate(model=global_model_params, method="test")
-                latent_space = None
-                if req_latent_space:
-                    log(INFO, f"Server requested {args.filter_bs}'s latent space to cluster")
-                    latent_space = trainer.get_latent_space(args.latent_dim, args.timevae_epochs)
-
+                # O latent_space já vem calculado (isolado, sob GPULock) do subprocesso acima;
+                # não recomputar no processo principal.
                 req_m = create_request("send_metrics", {"client_id": args.filter_bs, "value": {"instances": num_test_instances, "loss": test_loss,
                                                                                                  "metrics": test_eval_metrics, "latent_space": latent_space}})
                 send_and_wait(host, port, req_m)

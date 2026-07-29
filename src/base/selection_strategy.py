@@ -138,6 +138,22 @@ class TimeVAEWeeklyRepresentativeSelection(BaseSelectionStrategy):
 
         # Descobre qual é a semana atual baseada na rodada
         week_idx = ((self.round_counter - 1) // self.rounds_per_week) + 1
+
+        # Limita o índice à maior semana efetivamente disponível entre os clientes: em rodadas
+        # altas (week_idx > nº de semanas dos dados) todos seriam pulados e cairíamos em random.
+        # Ao saturar na última semana, seguimos re-clusterizando com o dado mais recente.
+        max_week_idx = 0
+        for cid in available_cids:
+            latent = registered_clients[cid].get('latent_space')
+            if isinstance(latent, dict):
+                for key in latent:
+                    try:
+                        max_week_idx = max(max_week_idx, int(key.split('_')[1]))
+                    except (IndexError, ValueError):
+                        continue
+        if max_week_idx > 0:
+            week_idx = min(week_idx, max_week_idx)
+
         current_week_key = f"week_{week_idx}"
 
         # Verifica se podemos usar o cache
