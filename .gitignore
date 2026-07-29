@@ -11,12 +11,3 @@ wandb/
 *.txt
 *.env
 
-# Generated FL simulation compose files (from generate_simulation.py)
-docker-compose.gpu.*.yml
-
-# Generated TimeVAE experiment compose (from generate_timevae_experiments.py)
-docker-compose.timevae.yml
-
-# Optuna study databases
-optuna_db/
-
