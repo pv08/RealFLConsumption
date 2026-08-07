@@ -236,6 +236,9 @@ class RandomSelection(BaseSelectionStrategy):
     def __repr__(self):
         return "Random Selection"
 
+    def __repr__(self):
+        return "Random Selection"
+
 
 class RoundRobinSelection(BaseSelectionStrategy):
     def __init__(self):
