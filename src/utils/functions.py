@@ -59,8 +59,10 @@ def get_model(model: str, input_dim: int, out_dim: int, lags: int = 10, device:s
 
 
 def mkdir_if_not_exists(path: str):
-    if not os.path.exists(path):
-        os.makedirs(path)
+    # exist_ok=True (e não um `if not os.path.exists`): com vários processos escrevendo no mesmo
+    # ./etc bind-montado, dois entram na janela entre o teste e a criação e o segundo levantaria
+    # FileExistsError.
+    os.makedirs(path, exist_ok=True)
 
 
 def make_default_dirs(model_name: str):

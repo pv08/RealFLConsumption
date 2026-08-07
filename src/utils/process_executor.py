@@ -43,6 +43,30 @@ def _evaluate_wrapper(queue, args, params, req_latent_space, latent_mode):
         queue.put({"status": "error", "message": str(e) + "\n" + traceback.format_exc()})
 
 
+def _timevae_phase_wrapper(queue, args, phase, splits):
+    """Roda UMA fase do eval_timevae.py isolada em outro processo.
+
+    Mesmo motivo do treino/avaliação do FL: ao sair, o processo devolve toda a memória CUDA, então
+    a vaga de GPU liberada em seguida está de fato livre. As fases são autocontidas — cada uma já
+    persiste o que produz (CSV, checkpoint do gerador) — e a única que devolve algo pela fila é a
+    HPO, cujos melhores hiperparâmetros o processo pai aplica em `args`.
+    """
+    try:
+        # Imports aqui dentro (e não no topo): `eval_timevae` importa este módulo, então importá-lo
+        # em escopo de módulo fecharia um ciclo. Também é o padrão dos outros wrappers.
+        from src.client_learning import ClientLearning
+        from src.utils.functions import seed_all
+        import eval_timevae as ev
+
+        seed_all(args.seed)
+        cl = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
+        result = ev.run_phase_body(cl, args, phase, splits)
+
+        queue.put({"status": "success", "result": result})
+    except Exception as e:
+        queue.put({"status": "error", "message": str(e) + "\n" + traceback.format_exc()})
+
+
 class ProcessExecutor:
     @staticmethod
     def run_train(args, params, hparams: dict=None):
@@ -86,5 +110,28 @@ class ProcessExecutor:
 
         if response["status"] == "error":
             raise RuntimeError(f"Evaluation Subprocess Error: {response['message']}")
+
+        return response["result"]
+
+    @staticmethod
+    def run_timevae_phase(args, phase: str, splits=None):
+        ctx = mp.get_context('spawn')
+        queue = ctx.Queue()
+
+        p = ctx.Process(
+            target=_timevae_phase_wrapper,
+            args=(queue, args, phase, splits)
+        )
+        p.start()
+        try:
+            response = queue.get()
+        except Exception as e:
+            p.kill()
+            raise RuntimeError(f"Queue Error: {e}")
+
+        p.join()
+
+        if response["status"] == "error":
+            raise RuntimeError(f"TimeVAE Phase '{phase}' Subprocess Error: {response['message']}")
 
         return response["result"]
