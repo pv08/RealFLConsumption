@@ -24,7 +24,9 @@ from src.client_learning import ClientLearning
 from src.data import LocalFileDataset
 from src.utils.functions import (get_model, inverse_transform_test, mkdir_if_not_exists,
                                  parse_channel_weights, parse_custom_seas, seed_all)
+from src.utils.gpu_lock import GPULock
 from src.utils.logger import log
+from src.utils.process_executor import ProcessExecutor
 
 
 def make_loader(X, y, batch_size, shuffle, num_workers):
@@ -183,6 +185,41 @@ def run_plots(cl, args, splits):
             out_path=f'{plots_dir}/{cl.cid}_generator_{split}{suffix}.png')
 
 
+def run_phase_body(cl, args, phase, splits=None):
+    """Executa uma fase da avaliação no processo atual.
+
+    Ponto ÚNICO de despacho de fases: o caminho isolado não reimplementa este `if` — o
+    `_timevae_phase_wrapper` do ProcessExecutor chama exatamente esta função dentro do subprocesso,
+    de modo que inline e isolado não podem divergir."""
+    if phase == "optimize":
+        return cl.optimize_generative_timevae(
+            split="train", n_trials=args.n_trials, hpo_epochs=args.hpo_epochs,
+            hpo_r_epochs=args.hpo_r_epochs, hpo_n_synthetic=args.hpo_n_synthetic,
+            model_name=args.model_name, full_epochs=args.timevae_epochs, seed=args.seed)
+    if phase == "TSTR":
+        return run_tstr(cl, args)
+    if phase == "TRTS":
+        return run_trts(cl, args)
+    if phase == "baseline":
+        return run_baseline(cl, args)
+    if phase == "plots":
+        return run_plots(cl, args, splits)
+    raise ValueError(f"Fase desconhecida: {phase}")
+
+
+def dispatch(args, phase, cl=None, splits=None):
+    """Roda a fase inline ou sob arbitragem de GPU, conforme `--gpu_slots`.
+
+    Com `--gpu_slots >= 1` a fase vai para um subprocesso 'spawn' segurado por um `GPULock`: só
+    `gpu_slots` execuções tocam a GPU ao mesmo tempo e a memória CUDA volta ao sistema quando o
+    subprocesso sai — o mesmo arranjo que os clientes da simulação FL usam (app-client.py)."""
+    if args.gpu_slots <= 0:
+        return run_phase_body(cl, args, phase, splits)
+    with GPULock(client_id=args.filter_bs, slots=args.gpu_slots, lock_dir=args.lock_dir):
+        log(INFO, f"[{args.filter_bs}] running phase '{phase}' in an isolated subprocess")
+        return ProcessExecutor.run_timevae_phase(args, phase, splits)
+
+
 def build_parser():
     """O parser do CLI, separado de `main()` para poder ser reusado.
 
@@ -208,6 +245,17 @@ def build_parser():
     parser.add_argument("--arm", type=str, default="",
                         help="Nome do braço sem a semente (ex.: A1). Vira coluna no CSV, para agrupar "
                              "as réplicas na hora de calcular média e desvio.")
+
+    # Arbitragem da GPU entre execuções concorrentes (mesmo mecanismo dos clientes da simulação FL)
+    parser.add_argument("--gpu_slots", type=int, default=0,
+                        help="Nº de execuções que podem tocar a GPU ao mesmo tempo. 0 (default) = "
+                             "sem arbitragem: tudo roda inline neste processo, como sempre. >= 1 "
+                             "faz cada fase (HPO/TSTR/TRTS/baseline/plots) rodar num subprocesso "
+                             "isolado sob GPULock, liberando a memória CUDA entre fases.")
+    parser.add_argument("--lock_dir", type=str, default="/app/lock_dir",
+                        help="Diretório dos arquivos de lock do GPULock. O default é o caminho do "
+                             "Docker; para rodar fora do contêiner aponte para um diretório "
+                             "gravável (ex.: ./lock_dir).")
 
     # Regressor
     parser.add_argument("--model_name", type=str, default="lstm", help="[rnn, lstm, gru, cnn]")
@@ -331,14 +379,13 @@ def main():
     log(INFO, f"eval_timevae args: {args}")
 
     start = time.time()
-    cl = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed)
+    # Com arbitragem de GPU quem constrói o ClientLearning é o subprocesso de cada fase; carregar
+    # os .npy aqui só seguraria memória enquanto se espera a vaga.
+    cl = ClientLearning(args=args, cid=args.filter_bs, seed=args.seed) if args.gpu_slots <= 0 else None
 
     if args.optimize:
         log(INFO, "===== Optuna HPO do gerador (split=train) =====")
-        best, best_val = cl.optimize_generative_timevae(
-            split="train", n_trials=args.n_trials, hpo_epochs=args.hpo_epochs,
-            hpo_r_epochs=args.hpo_r_epochs, hpo_n_synthetic=args.hpo_n_synthetic,
-            model_name=args.model_name, full_epochs=args.timevae_epochs, seed=args.seed)
+        best, best_val = dispatch(args, "optimize", cl)
         # Aplica os melhores hiperparâmetros e usa o gerador otimizado ('-opt') na avaliação.
         args.latent_dim = best["latent_dim"]
         args.gen_lr = best["lr"]
@@ -356,17 +403,17 @@ def main():
 
     splits = []
     if args.mode in ("TSTR", "both"):
-        run_tstr(cl, args)
+        dispatch(args, "TSTR", cl)
         splits.append("train")
     if args.mode in ("TRTS", "both"):
-        run_trts(cl, args)
+        dispatch(args, "TRTS", cl)
         splits.append("test")
     if args.mode == "baseline":
-        run_baseline(cl, args)
+        dispatch(args, "baseline", cl)
 
     if args.plots and splits:
         log(INFO, "===== Gráficos de diagnóstico =====")
-        run_plots(cl, args, splits)
+        dispatch(args, "plots", cl, splits=splits)
 
     log(INFO, f"eval_timevae finished in {(time.time() - start) / 60:.2f} min")
 

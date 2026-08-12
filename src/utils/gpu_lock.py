@@ -18,6 +18,7 @@ class GPULock:
         self.active_slot = None
 
     def __enter__(self):
+        waiting_since = None
         while True:
             for i in range(self.slots):
                 handle = open(self.lock_files[i], "w")
@@ -26,10 +27,20 @@ class GPULock:
                     fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     self.active_handle = handle
                     self.active_slot = i
+                    if waiting_since is not None:
+                        log(INFO, f"[Client {self.client_id}] acquired slot {i} after waiting "
+                                  f"{time.time() - waiting_since:.0f}s.")
+                    else:
+                        log(INFO, f"[Client {self.client_id}] acquired slot {i}.")
                     return self
                 except BlockingIOError:
                     handle.close()
                     continue
+            # Um aviso só ao entrar na fila — logar a cada volta do sleep afogaria o log de
+            # dezenas de processos esperando por horas.
+            if waiting_since is None:
+                waiting_since = time.time()
+                log(WARNING, f"[Client {self.client_id}] all {self.slots} GPU slot(s) busy, waiting...")
             time.sleep(1.0)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
