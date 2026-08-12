@@ -63,6 +63,8 @@ ARMS = {
     "A6": {"desc": "A5 + geração condicional: modela os 6 canais endógenos, condicionado em "
                    "clima/calendário (que vêm de janelas reais). É o DEFAULT do eval_timevae.py.",
            "flags": WITH_CHANNEL_WT + REF_ARCH + ["--gen_channels", ENDOGENOUS, "--cond_dim", "32"]},
+    "BASELINE": {"desc": "Apenas treinamento centralizado local do cliente, gerador não é treinado.",
+                 "flags": UNCONDITIONAL + NO_CHANNEL_WT + REF_ARCH},
 }
 
 
@@ -109,16 +111,17 @@ def build_service(cid, arm, seed, args, previous, n_seeds):
             "--model_name", args.model_name,
             "--data_path", f"dataset/pecanstreet/15min/{args.loc}/train/",
             "--test_path", f"dataset/pecanstreet/15min/{args.loc}/test/",
-            "--mode", "both",
+            "--mode", args.mode,
             "--timevae_epochs", str(args.timevae_epochs),
             "--r_epochs", str(args.r_epochs),
             "--seed", str(seed),
             "--arm", arm,
             "--run_tag", tag,
             "--gpu_slots", str(args.gpu_slots),
-        ] + (["--gen_holdout_days", str(args.gen_holdout_days)] if args.gen_holdout_days > 0 else [])
+        ] + (["--r_batch_size", str(args.r_batch_size)] if args.r_batch_size else [])
+          + (["--gen_holdout_days", str(args.gen_holdout_days)] if args.gen_holdout_days > 0 else [])
           + (["--plots"] if args.plots else []),
-        "command": ARMS[arm]["flags"],
+        "command": ARMS[arm]["flags"] + (["--batch_size", str(args.batch_size)] if args.batch_size else []),
     }
     if previous:
         # Encadeia apenas DENTRO de um cliente: as execuções (braço x semente) de um mesmo cid
@@ -143,8 +146,13 @@ def main():
                              "--gpu_slots de cada eval_timevae.py, que arbitra via GPULock sobre "
                              "./lock_dir — o mesmo mecanismo dos clientes da simulação FL.")
     parser.add_argument("--model_name", type=str, default="lstm")
+    parser.add_argument("--mode", type=str, default="both", help="[both, TSTR, TRTS, baseline]")
     parser.add_argument("--timevae_epochs", type=int, default=200)
     parser.add_argument("--r_epochs", type=int, default=20)
+    parser.add_argument("--r_batch_size", type=int, default=None,
+                        help="Tamanho do lote do regressor. Se omitido, usa o default de eval_timevae.py.")
+    parser.add_argument("--batch_size", type=int, default=None,
+                        help="Tamanho do lote do gerador. Se informado, sobrepõe o default do braço (arm).")
     parser.add_argument("--gen_holdout_days", type=int, default=0,
                         help="Reserva os últimos N dias para avaliar o gerador fora da amostra "
                              "(excluídos do treino + colchão). Os run_tags ganham sufixo 'h'.")

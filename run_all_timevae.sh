@@ -18,6 +18,9 @@ R_EPOCHS=20
 GEN_HOLDOUT_DAYS=0
 PLOTS=true
 NOTIFY=false
+MODE="both"
+R_BATCH_SIZE=""
+BATCH_SIZE=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -74,6 +77,18 @@ while [[ $# -gt 0 ]]; do
             NOTIFY=true
             shift
             ;;
+        --mode|-mode)
+            MODE="$2"
+            shift 2
+            ;;
+        --r_batch_size|-r_batch_size)
+            R_BATCH_SIZE="$2"
+            shift 2
+            ;;
+        --batch_size|-batch_size)
+            BATCH_SIZE="$2"
+            shift 2
+            ;;
         *)
             echo "[!] - Unknown argument: $1"
             exit 1
@@ -124,6 +139,14 @@ PLOTS_ARG=""
 if [[ "$PLOTS" == "false" ]]; then
     PLOTS_ARG="--no_plots"
 fi
+R_BATCH_SIZE_ARG=""
+if [[ -n "$R_BATCH_SIZE" ]]; then
+    R_BATCH_SIZE_ARG="--r_batch_size $R_BATCH_SIZE"
+fi
+BATCH_SIZE_ARG=""
+if [[ -n "$BATCH_SIZE" ]]; then
+    BATCH_SIZE_ARG="--batch_size $BATCH_SIZE"
+fi
 
 # Safety net: if the script gets interrupted mid-run, still tear down
 # whichever compose stack is currently up so container names are freed.
@@ -146,7 +169,8 @@ for i in "${!MODELS[@]}"; do
     python generate_timevae_experiments.py --loc "$TARGET_LOC" --model_name "$MODEL" \
         --arms "${ARMS[@]}" --seeds "${SEEDS[@]}" --gpu_slots "$GPU_SLOTS" \
         --timevae_epochs "$TIMEVAE_EPOCHS" --r_epochs "$R_EPOCHS" \
-        --out "$COMPOSE_FILE" $HOLDOUT_ARG $PLOTS_ARG
+        --mode "$MODE" \
+        --out "$COMPOSE_FILE" $HOLDOUT_ARG $PLOTS_ARG $R_BATCH_SIZE_ARG $BATCH_SIZE_ARG
 
     if [[ ! -f "$COMPOSE_FILE" ]]; then
         echo "[!] - Expected compose file ${COMPOSE_FILE} was not generated. Skipping..."
