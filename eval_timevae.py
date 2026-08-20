@@ -87,7 +87,7 @@ def evaluate_model(cl, model, loader):
     return scaled, inverted
 
 
-def save_results(args, mode, model_cls, scaled, inverted):
+def save_results(args, mode, model_cls, scaled, inverted, runtime_mins=None):
     outdir = f'etc/TimeVAE/{args.loc}/results/{model_cls}'
     mkdir_if_not_exists(outdir)
     # `run_tag` separa braços de experimento: sem ele todos escreveriam o mesmo arquivo e o
@@ -106,6 +106,8 @@ def save_results(args, mode, model_cls, scaled, inverted):
            "cond_dim": args.cond_dim if args.gen_channels else None}
     row.update({f"scaled_{k}": v for k, v in scaled.items()})
     row.update({f"inv_{k}": v for k, v in inverted.items()})
+    if runtime_mins is not None:
+        row["runtime_mins"] = runtime_mins
     path = f'{outdir}/{args.filter_bs}_{mode}{suffix}_metrics_ld{args.latent_dim}.csv'
     pd.DataFrame([row]).to_csv(path, index=False)
     log(INFO, f"[{mode}] metrics saved to {path}")
@@ -114,6 +116,7 @@ def save_results(args, mode, model_cls, scaled, inverted):
 
 
 def run_tstr(cl, args):
+    start_time = time.time()
     log(INFO, "===== TSTR: train synthetic, test real =====")
     X_syn, y_syn = cl.sample_synthetic(n=args.n_synthetic, latent_dim=args.latent_dim,
                                        epochs=args.timevae_epochs, split="train", **gen_kwargs(args, cl))
@@ -129,10 +132,12 @@ def run_tstr(cl, args):
     test_ds = LocalFileDataset(client_id=args.filter_bs, _type="test", data_path=args.test_path)
     test_loader = DataLoader(test_ds, batch_size=args.r_batch_size, shuffle=False, num_workers=args.num_workers)
     scaled, inverted = evaluate_model(cl, model, test_loader)
-    save_results(args, "TSTR", type(model).__name__, scaled, inverted)
+    runtime_mins = (time.time() - start_time) / 60.0
+    save_results(args, "TSTR", type(model).__name__, scaled, inverted, runtime_mins=runtime_mins)
 
 
 def run_trts(cl, args):
+    start_time = time.time()
     log(INFO, "===== TRTS: train real, test synthetic =====")
     real_tr = DataLoader(cl.train_dataset, batch_size=args.r_batch_size, shuffle=True, num_workers=args.num_workers)
     real_val = DataLoader(cl.val_dataset, batch_size=args.r_batch_size, shuffle=False, num_workers=args.num_workers)
@@ -142,10 +147,12 @@ def run_trts(cl, args):
                                        epochs=args.timevae_epochs, split="test", **gen_kwargs(args, cl))
     syn_loader = make_loader(X_syn, y_syn, args.r_batch_size, False, args.num_workers)
     scaled, inverted = evaluate_model(cl, model, syn_loader)
-    save_results(args, "TRTS", type(model).__name__, scaled, inverted)
+    runtime_mins = (time.time() - start_time) / 60.0
+    save_results(args, "TRTS", type(model).__name__, scaled, inverted, runtime_mins=runtime_mins)
 
 
 def run_baseline(cl, args):
+    start_time = time.time()
     log(INFO, "===== BASELINE: train real, test real =====")
     real_tr = DataLoader(cl.train_dataset, batch_size=args.r_batch_size, shuffle=True, num_workers=args.num_workers)
     real_val = DataLoader(cl.val_dataset, batch_size=args.r_batch_size, shuffle=False, num_workers=args.num_workers)
@@ -153,7 +160,8 @@ def run_baseline(cl, args):
     test_ds = LocalFileDataset(client_id=args.filter_bs, _type="test", data_path=args.test_path)
     test_loader = DataLoader(test_ds, batch_size=args.r_batch_size, shuffle=False, num_workers=args.num_workers)
     scaled, inverted = evaluate_model(cl, model, test_loader)
-    save_results(args, "BASELINE", type(model).__name__, scaled, inverted)
+    runtime_mins = (time.time() - start_time) / 60.0
+    save_results(args, "BASELINE", type(model).__name__, scaled, inverted, runtime_mins=runtime_mins)
 
 
 def run_plots(cl, args, splits):
