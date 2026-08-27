@@ -1,7 +1,7 @@
 import os
 import yaml
 from argparse import ArgumentParser
-from logging import INFO
+from logging import INFO, WARNING
 from src.utils.logger import log
 
 # Import tardio e opcional: get_available_clients_location vive em
@@ -12,6 +12,16 @@ try:
     from src.utils.functions import get_available_clients_location
 except ImportError:
     get_available_clients_location = None
+
+def _owner(path):
+    """Dono de um caminho, em texto, para a mensagem de erro de permissao."""
+    try:
+        import pwd, grp
+        st = os.stat(path)
+        return f"{pwd.getpwuid(st.st_uid).pw_name}:{grp.getgrgid(st.st_gid).gr_name}"
+    except Exception:
+        return "desconhecido"
+
 
 LOCATIONS = ["austin", "california", "newyork", "puertorico"]
 MODELS = ["rnn", "lstm", "gru", "cnn"]
@@ -50,8 +60,29 @@ def _create_compose(loc: str, models: str, scope: str, jobs: int, epochs: int, b
     # mount cujo caminho no host nao existe e criado pelo Docker como root:root,
     # e o container (que roda com o uid do usuario) nao consegue escrever nele.
     # Mesma razao do mkdir_if_not_exists("lock_dir") no generate_simulation.py.
+    unwritable = []
     for d in ("etc", out_root, "dataset"):
-        os.makedirs(d, exist_ok=True)
+        try:
+            os.makedirs(d, exist_ok=True)
+        except PermissionError:
+            unwritable.append(d)
+            continue
+        # Criar nao basta: o diretorio pode ja existir de uma execucao anterior
+        # que o Docker criou como root. Nesse caso makedirs(exist_ok=True) passa
+        # silenciosamente e o erro so aparece la dentro do container.
+        if not os.access(d, os.W_OK):
+            unwritable.append(d)
+
+    if unwritable:
+        st = ", ".join(f"{d} (dono {_owner(d)})" for d in unwritable)
+        log(WARNING, f"Sem permissao de escrita em: {st}")
+        log(WARNING, f"O container roda como {os.getuid()}:{os.getgid()} e nao vai conseguir "
+                     f"escrever ai. Isso acontece quando o Docker criou o volume como root "
+                     f"porque o caminho nao existia no host. Corrija com:")
+        log(WARNING, f"    sudo chown -R {os.getuid()}:{os.getgid()} {' '.join(unwritable)}")
+        log(WARNING, f"    # ou, sem sudo:")
+        log(WARNING, f"    docker run --rm -v \"$PWD:/x\" alpine chown -R "
+                     f"{os.getuid()}:{os.getgid()} {' '.join('/x/' + d for d in unwritable)}")
 
     # Opcao A: UM servico rodando o lote inteiro, com o paralelismo controlado
     # pelo -jobs do run_centralized.sh. A GPU e uma so, entao um container por
