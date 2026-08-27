@@ -10,6 +10,7 @@ from logging import INFO, WARNING
 from typing import List, Dict, Tuple
 from collections import OrderedDict
 from src.utils.functions import mkdir_if_not_exists, get_model, seed_all
+from src.base.selection_strategy import TimeVAEWeeklyRepresentativeSelection
 from src.structure.blockchain import Blockchain
 from src.utils.logger import log
 from src.utils.notifier import send_webhook_notification
@@ -213,12 +214,14 @@ class FLServerState:
         if self.phase in ["INITIAL_EVAL", "GLOBAL_EVAL"]:
             if client_id not in self.evaluations_received:
                 req_latent_space = (self.phase == "INITIAL_EVAL" and "TimeVAE" in type(self.selection_strategy).__name__)
+                latent_mode = "weekly" if isinstance(self.selection_strategy, TimeVAEWeeklyRepresentativeSelection) else "fixed"
 
                 return "evaluate", {
                     "phase": self.phase,
                     "architecture": self.global_model,
                     "weights": self.global_weights,
-                    "req_latent_space": req_latent_space
+                    "req_latent_space": req_latent_space,
+                    "latent_mode": latent_mode
                 }
             else:
                 self._add_to_waitlist(message_obj)

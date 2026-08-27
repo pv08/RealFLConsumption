@@ -15,6 +15,39 @@ class Sampling(nn.Module):
         return z_mean + T.exp(.5 * z_log_var) * epsilon
 
 
+class ConditionEncoder(nn.Module):
+    """Comprime os canais exógenos de uma janela num vetor de condicionamento (B, cond_dim).
+
+    Usado só na geração condicional: o decoder recebe `[z, c]` em vez de `z`, então o consumo
+    gerado é coerente com o clima/calendário daquela janela. Sem isso, anexar canais exógenos
+    reais a um consumo amostrado de forma independente quebraria a correlação entre features e
+    alvo — que é justamente o que o regressor do TSTR precisa aprender.
+
+    A pilha convolucional espelha a do `TimeVAEEncoder`; a diferença é que a saída é
+    determinística (uma projeção linear), não uma distribuição: o contexto é observado, não
+    inferido."""
+
+    def __init__(self, seq_len, cond_feat_dim, hidden_sizes, cond_dim, device):
+        super(ConditionEncoder, self).__init__()
+        layers = [nn.Conv1d(cond_feat_dim, hidden_sizes[0], kernel_size=3, stride=2, padding=1),
+                  nn.ReLU()]
+        for i, num_filters in enumerate(hidden_sizes[1:]):
+            layers += [nn.Conv1d(hidden_sizes[i], num_filters, kernel_size=3, stride=2, padding=1),
+                       nn.ReLU()]
+        layers.append(nn.Flatten())
+        self.conv = nn.Sequential(*layers)
+        # Dimensão achatada medida por uma passagem seca, como em TimeVAEEncoder — ainda em CPU,
+        # antes do .to(device).
+        with T.no_grad():
+            flat_dim = self.conv(T.randn(1, cond_feat_dim, seq_len)).numel()
+        self.proj = nn.Linear(flat_dim, cond_dim)
+        self.to(device)
+
+    def forward(self, c):
+        """c: (B, seq_len, cond_feat_dim) -> (B, cond_dim)"""
+        return self.proj(self.conv(c.transpose(1, 2)))
+
+
 class TrendLayer(nn.Module):
     def __init__(self, seq_len, feat_dim, latent_dim, trend_poly, device):
         super(TrendLayer, self).__init__()

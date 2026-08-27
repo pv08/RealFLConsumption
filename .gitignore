@@ -11,6 +11,3 @@ wandb/
 *.txt
 *.env
 
-# Generated FL simulation compose files (from generate_simulation.py)
-docker-compose.gpu.*.yml
-

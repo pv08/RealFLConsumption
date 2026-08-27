@@ -26,13 +26,13 @@ def accept_wrapper(sock, fl_state):
     message = libserver.Message(sel, conn, addr, fl_state)
     sel.register(conn, selectors.EVENT_READ, data=message)
 
-def get_select_strategy(strategy: str="random", cluster_size: Optional[int]=None, seed: int=0):
+def get_select_strategy(strategy: str="random", cluster_size: Optional[int]=None, seed: int=0, rounds_per_week: int=10):
     if strategy == "random":
         return RandomSelection(seed=seed)
     elif strategy == "fixed-representativeness" and cluster_size is not None:
         return TimeVAE(min_cluster_size=cluster_size)
     elif strategy == "weekly-representativeness" and cluster_size is not None:
-        return TimeVAEWeeklyRepresentativeSelection(min_cluster_size=cluster_size)
+        return TimeVAEWeeklyRepresentativeSelection(min_cluster_size=cluster_size, rounds_per_week=rounds_per_week)
     else:
         raise KeyError(f"Please, select a client selection strategy valid. {strategy} do not exists. Valid options: ['random', 'fixed-representativeness', 'weekly-representativeness']")
 
@@ -43,6 +43,10 @@ def main():
     parser.add_argument('--port', type=int, default=65432)
     parser.add_argument('--client_strategy', type=str, default='random', help="['random', 'fixed-representativeness', 'weekly-representativeness']")
     parser.add_argument('--min_cluster_size', type=int, default=2)
+    parser.add_argument('--rounds_per_week', type=int, default=10,
+                        help="Rodadas por 'semana' na estratégia weekly-representativeness: a cada "
+                             "esse número de rodadas o servidor re-clusteriza usando a assinatura "
+                             "latente da nova janela. Ignorado pelas demais estratégias.")
     parser.add_argument('--clients_per_round', type=int, default=5)
     parser.add_argument('--optimize_clients', action='store_true')
     parser.add_argument('--disable_blockchain', action='store_true', help="Skip the Blockchain ledger (no per-update hashing/duplicate-replay check, no ledger file written)")
@@ -68,7 +72,7 @@ def main():
     args = parser.parse_args()
     print(args)
     host, port = args.host, args.port
-    strategy = get_select_strategy(strategy=args.client_strategy, cluster_size=args.min_cluster_size, seed=args.seed)
+    strategy = get_select_strategy(strategy=args.client_strategy, cluster_size=args.min_cluster_size, seed=args.seed, rounds_per_week=args.rounds_per_week)
     aggregation = Aggregator(aggregation_alg=args.aggregation)
     wandb_config = {
         'project': args.wandb_project,

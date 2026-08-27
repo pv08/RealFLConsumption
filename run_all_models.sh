@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Parse --loc / -loc, --epochs / -epochs, --clients_per_round / -clients_per_round, --gpu_slots / -gpu_slots, --notify / -notify, --wandb / -wandb
+# Parse --loc / -loc, --epochs / -epochs, --clients_per_round / -clients_per_round, --max_rounds / -max_rounds, --gpu_slots / -gpu_slots, --notify / -notify, --wandb / -wandb
 TARGET_LOC=""
 EPOCHS=200
 CLIENTS_PER_ROUND=5
+MAX_ROUNDS=10
 GPU_SLOTS=1
 NOTIFY=false
 WANDB=false
@@ -19,6 +20,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --clients_per_round|-clients_per_round)
             CLIENTS_PER_ROUND="$2"
+            shift 2
+            ;;
+        --max_rounds|-max_rounds)
+            MAX_ROUNDS="$2"
             shift 2
             ;;
         --gpu_slots|-gpu_slots)
@@ -55,7 +60,7 @@ notify() {
 }
 
 if [[ -z "$TARGET_LOC" ]]; then
-    echo "[!] - Usage: bash $0 -loc <austin|california|newyork|puertorico> [-epochs <n>] [-clients_per_round <n>] [-gpu_slots <n>] [-notify] [-wandb]"
+    echo "[!] - Usage: bash $0 -loc <austin|california|newyork|puertorico> [-epochs <n>] [-clients_per_round <n>] [-max_rounds <n>] [-gpu_slots <n>] [-notify] [-wandb]"
     exit 1
 fi
 
@@ -68,11 +73,14 @@ case "$TARGET_LOC" in
 esac
 
 echo "[!] - Target location: $TARGET_LOC"
-echo "[!] - Epochs: $EPOCHS | Clients per round: $CLIENTS_PER_ROUND | GPU slots: $GPU_SLOTS"
+echo "[!] - Epochs: $EPOCHS | Clients per round: $CLIENTS_PER_ROUND | Max rounds: $MAX_ROUNDS | GPU slots: $GPU_SLOTS"
 
-# Model -> seed mapping (RNN=0, LSTM=1, GRU=2)
+# Seed pattern: <fraction><epochs><fl_rounds> concatenated (fraction=clients_per_round,
+# fl_rounds=max_rounds), plus the model index so each model keeps a distinct seed.
+# e.g. clients_per_round=5, epochs=200, max_rounds=10 -> base 520010 -> rnn=520010, lstm=520011, gru=520012.
 MODELS=(rnn lstm gru)
-SEEDS=(0 1 2)
+BASE_SEED="${CLIENTS_PER_ROUND}${EPOCHS}${MAX_ROUNDS}"
+echo "[!] - Base seed (<clients_per_round><epochs><max_rounds>): $BASE_SEED"
 TOTAL=${#MODELS[@]}
 RESULTS=()
 NOTIFY_ARG=""
@@ -96,7 +104,7 @@ trap cleanup EXIT
 
 for i in "${!MODELS[@]}"; do
     MODEL="${MODELS[$i]}"
-    SEED="${SEEDS[$i]}"
+    SEED=$((BASE_SEED + (i + 1)))
     CURRENT=$((i + 1))
     COMPOSE_FILE="docker-compose.gpu.${MODEL}.${TARGET_LOC}.seed${SEED}.yml"
 
@@ -104,7 +112,8 @@ for i in "${!MODELS[@]}"; do
     echo "[$CURRENT/$TOTAL] - Generating simulation for model=${MODEL} loc=${TARGET_LOC} seed=${SEED}"
 
     python generate_simulation.py --loc "$TARGET_LOC" --model_name "$MODEL" --seed "$SEED" \
-        --epochs "$EPOCHS" --clients_per_round "$CLIENTS_PER_ROUND" --gpu_slots "$GPU_SLOTS" $NOTIFY_ARG $WANDB_ARG
+        --epochs "$EPOCHS" --clients_per_round "$CLIENTS_PER_ROUND" --max_rounds "$MAX_ROUNDS" \
+        --gpu_slots "$GPU_SLOTS" $NOTIFY_ARG $WANDB_ARG
 
     if [[ ! -f "$COMPOSE_FILE" ]]; then
         echo "[!] - Expected compose file ${COMPOSE_FILE} was not generated. Skipping..."
