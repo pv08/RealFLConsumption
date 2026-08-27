@@ -19,5 +19,7 @@ docker-compose.gpu.*.yml
 /optuna_db/
 
 # Compose gerado por generate_timevae_experiments.py
-# (docker-compose.centralized.yml e escrito a mao e E versionado)
 docker-compose.timevae.yml
+
+# Compose gerado por generate_centralized_simulation.py
+docker-compose.centralized*.yml
