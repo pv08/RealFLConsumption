@@ -46,6 +46,13 @@ def _runner_command(loc: str, models: str, scope: str, jobs: int, epochs: int, b
 def _create_compose(loc: str, models: str, scope: str, jobs: int, epochs: int, batch_size: int,
                     lr: float, optimizer: str, seed: int, out_root: str, bootstrap: bool,
                     force: bool, no_retry: bool, notify: bool, output: str = None):
+    # Os diretorios montados TEM de existir antes do compose subir. Um bind
+    # mount cujo caminho no host nao existe e criado pelo Docker como root:root,
+    # e o container (que roda com o uid do usuario) nao consegue escrever nele.
+    # Mesma razao do mkdir_if_not_exists("lock_dir") no generate_simulation.py.
+    for d in ("etc", out_root, "dataset"):
+        os.makedirs(d, exist_ok=True)
+
     # Opcao A: UM servico rodando o lote inteiro, com o paralelismo controlado
     # pelo -jobs do run_centralized.sh. A GPU e uma so, entao um container por
     # cliente (como no federado) nao compraria paralelismo nenhum - so jogaria

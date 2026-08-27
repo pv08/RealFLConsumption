@@ -201,9 +201,18 @@ job_done() {
 
 RUNLOG_DIR="$OUT_ROOT/_runlogs"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$RUNLOG_DIR"
 STATUS_FILE="$RUNLOG_DIR/status-$STAMP.tsv"
-: > "$STATUS_FILE"
+# Falhar aqui, e alto. Em Docker, um bind mount cujo caminho no host nao existe
+# e criado como root:root, e o container - que roda com o uid do usuario - nao
+# escreve nele. Sem esta checagem o lote seguia adiante e terminava com
+# "OK: 0 | FAIL: 0" e codigo de saida 0, ou seja, parecia sucesso.
+if ! mkdir -p "$RUNLOG_DIR" 2>/dev/null || ! : > "$STATUS_FILE" 2>/dev/null; then
+    echo "[!] - Sem permissao de escrita em '$OUT_ROOT' (uid $(id -u), gid $(id -g))." >&2
+    echo "        Dono do diretorio: $(stat -c '%U:%G' "$OUT_ROOT" 2>/dev/null || echo 'nao existe')" >&2
+    echo "        Em Docker, isso costuma ser um volume criado como root porque o" >&2
+    echo "        caminho nao existia no host. Crie-o antes: mkdir -p $OUT_ROOT" >&2
+    exit 1
+fi
 
 echo "[!] - loc=$TARGET_LOC | models=\"$MODELS\" | scope=$SCOPE | jobs=$JOBS"
 echo "[!] - epochs=$EPOCHS | batch_size=$BATCH_SIZE | lr=$LR | optimizer=$OPTIMIZER | seed=$SEED"
