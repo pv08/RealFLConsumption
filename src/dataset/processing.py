@@ -95,7 +95,10 @@ class Data(ABC):
             df = pd.read_csv(f"{self.data_path}/{filter_data}.csv")
         if filter_data is not None:
             log(INFO, f"Reading {filter_data}'s data...")
-            df = df.loc[df['cid'] == int(filter_data)]
+            # A serie comunitaria ja e um agregado: seu cid nao e numerico e o
+            # arquivo contem uma unica entidade, entao nao ha o que filtrar.
+            if str(filter_data) != 'community':
+                df = df.loc[df['cid'] == int(filter_data)]
         df.drop("Date", axis=1, inplace=True)
         cols = [col for col in df.columns if col not in ["cid"]]
         df[cols] = df[cols].astype('float32')
@@ -612,7 +615,8 @@ class Processing(Data):
         df = pd.read_csv(f"{self.args.test_path}/{filter_data}.csv")
         if filter_data is not None:
             log(INFO, f"Reading {filter_data}'s data...")
-            df = df.loc[df['cid'] == int(filter_data)]
+            if str(filter_data) != 'community':
+                df = df.loc[df['cid'] == int(filter_data)]
         df.drop("Date", axis=1, inplace=True)
         cols = [col for col in df.columns if col not in ["cid"]]
         df[cols] = df[cols].astype('float32')

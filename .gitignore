@@ -14,10 +14,15 @@ wandb/
 # Generated FL simulation compose files (from generate_simulation.py)
 docker-compose.gpu.*.yml
 
-# Generated TimeVAE experiment compose (from generate_timevae_experiments.py)
+# Compose gerado por generate_timevae_experiments.py
 docker-compose.timevae.yml
 docker-compose.timevae.*.yml
 
+# Compose gerado por generate_centralized_simulation.py
+docker-compose.centralized*.yml
+
+# Entregaveis e artefatos de simulacao (pesados; nao versionados)
+/sim-results/
+
 # Optuna study databases
 optuna_db/
-

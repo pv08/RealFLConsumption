@@ -16,3 +16,7 @@ __pycache__
 *.log
 venv/
 .env
+
+# Entregaveis e bancos do Optuna: nao entram na imagem, so incham o contexto
+sim-results/
+optuna_db/
